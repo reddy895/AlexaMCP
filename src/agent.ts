@@ -192,6 +192,120 @@ export async function runInvestigation(
   console.log(colors.yellow(`\nWarning: Reached maximum investigation steps (${MAX_STEPS}) without a final verdict.`));
 }
 
+// ====================================================================
+// SECTION E — main()
+// ====================================================================
+
+export async function main(): Promise<void> {
+  // 1. Banner
+  console.log(
+    colors.cyan(`
+╔═══════════════════════════════════════════════════════════════╗
+║          ALEXA + MCP — DIGITAL DETECTIVE AGENT                ║
+║  Local Inference: ${MODEL.padEnd(16)} MCP: ${MCP_URL.padEnd(20)}║
+╚═══════════════════════════════════════════════════════════════╝
+`)
+  );
+
+  // 2. Health check Ollama
+  let tagsData: any;
+  try {
+    const resp = await fetch(`${OLLAMA_URL}/api/tags`);
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+    tagsData = await resp.json();
+  } catch (err) {
+    console.error(
+      colors.red(
+        `Cannot reach Ollama at ${OLLAMA_URL}.\nPlease make sure Ollama is installed and running via "ollama serve".`
+      )
+    );
+    process.exit(1);
+  }
+
+  const availableModels: string[] = (tagsData.models ?? []).map(
+    (m: any) => m.name ?? m.model ?? ""
+  );
+  const modelPrefix = MODEL.split(":")[0];
+  const hasModel = availableModels.some(
+    (m) => m === MODEL || m.startsWith(modelPrefix)
+  );
+  if (!hasModel) {
+    console.log(
+      colors.yellow(
+        `Notice: Model "${MODEL}" not found. Run "ollama pull ${MODEL}" to download it.`
+      )
+    );
+  }
+
+  // 3. Connect MCP client
+  let transport: StreamableHTTPClientTransport;
+  let client: Client;
+  try {
+    transport = new StreamableHTTPClientTransport(new URL(MCP_URL));
+    client = new Client({ name: "digital-detective-agent", version: "1.0.0" });
+    await client.connect(transport);
+  } catch (err) {
+    console.error(
+      colors.red(
+        `Cannot reach MCP server at ${MCP_URL}.\nPlease start it first via "npm run server".`
+      )
+    );
+    process.exit(1);
+  }
+
+  // 4. List tools
+  let ollamaTools: OllamaTool[] = [];
+  try {
+    ollamaTools = await mcpToolsToOllama(client);
+    console.log(
+      colors.green(`Connected. ${ollamaTools.length} investigation tools available.`)
+    );
+  } catch (err: any) {
+    console.error(colors.red(`Failed to list tools from MCP server: ${err?.message ?? String(err)}`));
+    await client.close();
+    process.exit(1);
+  }
+
+  // 5. Interactive readline loop
+  const rl = readline.createInterface({ input, output });
+
+  try {
+    while (true) {
+      const line = await rl.question(colors.boldCyan("detective› "));
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (["exit", "quit", ":q"].includes(trimmed.toLowerCase())) {
+        break;
+      }
+
+      try {
+        await runInvestigation(client, ollamaTools, trimmed);
+      } catch (err: any) {
+        console.error(colors.red(`Investigation error: ${err?.message ?? String(err)}`));
+      }
+    }
+  } finally {
+    rl.close();
+    try {
+      await client.close();
+    } catch {
+      // ignore
+    }
+    console.log(colors.dim("bye."));
+  }
+}
+
+// Auto-run if executed directly
+if (process.argv[1] && process.argv[1].endsWith("agent.ts")) {
+  main().catch((err) => {
+    console.error(colors.red(`Fatal agent error: ${err?.message ?? String(err)}`));
+    process.exit(1);
+  });
+}
+
+
 
 
 

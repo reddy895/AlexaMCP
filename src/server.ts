@@ -299,6 +299,12 @@ export function analyzeMessage(text: string): MessageAnalysis {
     redFlags.push("Excessive exclamation marks conveying artificial excitement or panic");
   }
 
+  // Red flag: All-caps shouting (6+ consecutive uppercase letters)
+  if (/[A-Z]{6,}/.test(content)) {
+    redFlags.push("All-caps shouting or aggressive capitalization patterns");
+  }
+
+
 
 
 

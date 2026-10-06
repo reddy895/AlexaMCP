@@ -113,6 +113,26 @@ export async function safeFetch(
   }
 }
 
+// ====================================================================
+// SECTION B — Investigation logic (pure functions, no side effects)
+// ====================================================================
+
+export type ClaimType =
+  | "financial"
+  | "payment_request"
+  | "sensitive_info_request"
+  | "too_good_to_be_true"
+  | "urgency"
+  | "link"
+  | "general";
+
+export type Claim = {
+  claim: string;
+  type: ClaimType | string;
+  importance: "low" | "medium" | "high";
+};
+
+
 
 
 

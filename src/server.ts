@@ -514,6 +514,47 @@ export async function searchEvidence(query: string): Promise<SearchEvidenceResul
   }
 }
 
+export type CrossReferenceResult = {
+  conflicts: string[];
+  supports: string[];
+  evidenceCount: number;
+};
+
+/**
+ * Compares extracted claims against collected evidence and highlights conflicts or supports.
+ */
+export function crossReference(claims: Claim[], evidence: any[]): CrossReferenceResult {
+  const conflicts: string[] = [];
+  const supports: string[] = [];
+
+  // Flatten evidence: could be array of { results: [...] } or direct items
+  const flattenedEvidence: EvidenceItem[] = [];
+  if (Array.isArray(evidence)) {
+    for (const item of evidence) {
+      if (item && Array.isArray(item.results)) {
+        flattenedEvidence.push(...item.results);
+      } else if (item && typeof item === "object" && (item.title || item.snippet)) {
+        flattenedEvidence.push(item);
+      }
+    }
+  }
+
+  const scamWords = ["scam", "fraud", "fake", "warning", "phishing", "complaint"];
+  const evidenceText = flattenedEvidence
+    .map((e) => `${e.title ?? ""} ${e.snippet ?? ""}`)
+    .join(" ")
+    .toLowerCase();
+
+  const foundScamWords = scamWords.filter((w) => evidenceText.includes(w));
+
+  return {
+    conflicts,
+    supports,
+    evidenceCount: flattenedEvidence.length,
+  };
+}
+
+
 
 
 

@@ -267,6 +267,17 @@ export function analyzeMessage(text: string): MessageAnalysis {
     redFlags.push("Unsolicited reward, lottery, or selection language without prior engagement");
   }
 
+  // Red flag: Unrealistic eligibility / earnings promise
+  if (/(no experience|without interview|instant approval|guaranteed (income|job|salary|profit)|paying [₹$€£]?\s?\d|work from home.*earn)/i.test(content)) {
+    redFlags.push("Unrealistic eligibility criteria or excessive earnings promised for minimal effort");
+  }
+
+  // Red flag: Guarantee language
+  if (/(guarantee|100%|risk.?free|guaranteed return)/i.test(content)) {
+    redFlags.push("Absolutes or guarantees offered (100% guarantee / risk-free)");
+  }
+
+
 
 
   return {

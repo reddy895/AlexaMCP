@@ -273,7 +273,14 @@ export async function main(): Promise<void> {
 
   try {
     while (true) {
-      const line = await rl.question(colors.boldCyan("detective› "));
+      let line: string;
+      try {
+        line = await rl.question(colors.boldCyan("detective› "));
+      } catch {
+        // stdin stream closed (EOF)
+        break;
+      }
+
       const trimmed = line.trim();
       if (!trimmed) continue;
       if (["exit", "quit", ":q"].includes(trimmed.toLowerCase())) {
@@ -295,6 +302,7 @@ export async function main(): Promise<void> {
     }
     console.log(colors.dim("bye."));
   }
+
 }
 
 // Auto-run if executed directly

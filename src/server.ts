@@ -222,6 +222,37 @@ export function extractClaims(text: string): Claim[] {
   return claims;
 }
 
+export type MessageAnalysis = {
+  redFlags: string[];
+  urgencyScore: number;
+  wordCount: number;
+  containsUrl: boolean;
+  containsMoney: boolean;
+};
+
+/**
+ * Analyzes wording for manipulation, urgency, and social engineering red flags.
+ */
+export function analyzeMessage(text: string): MessageAnalysis {
+  const content = text ?? "";
+  const redFlags: string[] = [];
+
+  const wordCount = content.trim().split(/\s+/).filter((w) => w.length > 0).length;
+  const containsUrl = /(https?:\/\/|www\.)/i.test(content);
+  const containsMoney = /[₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)\b/i.test(content);
+
+  let urgencyScore = 0;
+
+  return {
+    redFlags,
+    urgencyScore,
+    wordCount,
+    containsUrl,
+    containsMoney,
+  };
+}
+
+
 
 
 

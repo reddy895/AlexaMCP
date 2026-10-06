@@ -242,6 +242,20 @@ export function analyzeMessage(text: string): MessageAnalysis {
   const containsMoney = /[₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)\b/i.test(content);
 
   let urgencyScore = 0;
+  if (/(urgent|immediately|within \d+ (hours|minutes|days)|act now)/i.test(content)) {
+    urgencyScore += 50;
+  }
+  if (/(hurry|limited time|expires|today only|deadline|instant)/i.test(content)) {
+    urgencyScore += 30;
+  }
+  if (/!{2,}/.test(content)) {
+    urgencyScore += 15;
+  }
+  if (/[A-Z]{6,}/.test(content)) {
+    urgencyScore += 15;
+  }
+  urgencyScore = Math.min(100, Math.max(0, urgencyScore));
+
 
   return {
     redFlags,

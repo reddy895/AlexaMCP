@@ -723,6 +723,84 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
   };
 }
 
+export type InvestigationReportInput = {
+  subject: string;
+  claims: any[];
+  analysis: any;
+  urlFindings?: any[];
+  evidence?: any[];
+  crossRef?: any;
+  risk?: any;
+};
+
+/**
+ * Assembles the final structured investigation report from all prior tool outputs.
+ */
+export function generateInvestigationReport(input: InvestigationReportInput) {
+  const subject = input.subject ?? "Suspicious Content";
+  const claims = Array.isArray(input.claims) ? input.claims : [];
+  const analysis = input.analysis ?? {};
+  const redFlags = Array.isArray(analysis.redFlags) ? analysis.redFlags : [];
+
+  const urlFindings = Array.isArray(input.urlFindings) ? input.urlFindings : [];
+  const urlSignals: string[] = [];
+  for (const uf of urlFindings) {
+    if (uf && Array.isArray(uf.signals)) {
+      urlSignals.push(...uf.signals);
+    }
+  }
+
+  // Flatten evidence and take top 5
+  const rawEvidence = Array.isArray(input.evidence) ? input.evidence : [];
+  const flattenedEvidence: EvidenceItem[] = [];
+  for (const item of rawEvidence) {
+    if (item && Array.isArray(item.results)) {
+      flattenedEvidence.push(...item.results);
+    } else if (item && typeof item === "object" && (item.title || item.snippet)) {
+      flattenedEvidence.push(item);
+    }
+  }
+  const evidence = flattenedEvidence.slice(0, 5);
+
+  const crossRef = input.crossRef ?? {};
+  const conflictingEvidence = Array.isArray(crossRef.conflicts) ? crossRef.conflicts : [];
+  const supportingEvidence = Array.isArray(crossRef.supports) ? crossRef.supports : [];
+
+  const risk = input.risk ?? {};
+  const riskScore = typeof risk.score === "number" ? risk.score : 0;
+  const verdict = risk.verdict ?? (riskScore >= 70 ? "HIGH RISK" : riskScore >= 35 ? "SUSPICIOUS" : "LIKELY SAFE");
+  const riskFactors = Array.isArray(risk.factors) ? risk.factors : [];
+
+  // Recommendation text based on riskScore
+  let recommendation: string;
+  if (riskScore >= 70) {
+    recommendation =
+      "Do NOT send money, documents, or personal data. Independently verify the sender through official channels.";
+  } else if (riskScore >= 35) {
+    recommendation = "Treat with caution. Verify the sender and any links before acting.";
+  } else {
+    recommendation = "No strong red flags detected, but stay alert for follow-up requests.";
+  }
+
+  const summary = `Investigation completed for: "${subject}". Verdict: ${verdict} (Risk Score: ${riskScore}/100) based on ${claims.length} extracted claims, ${redFlags.length} linguistic red flags, ${urlSignals.length} URL signals, and ${flattenedEvidence.length} public evidence items.`;
+
+  return {
+    verdict,
+    riskScore,
+    subject,
+    summary,
+    redFlags,
+    urlSignals,
+    claims,
+    evidence,
+    conflictingEvidence,
+    supportingEvidence,
+    riskFactors,
+    recommendation,
+  };
+}
+
+
 
 
 

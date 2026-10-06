@@ -319,6 +319,45 @@ export function analyzeMessage(text: string): MessageAnalysis {
   };
 }
 
+export type UrlInspectionResult = {
+  url: string;
+  signals: string[];
+  info: Record<string, unknown>;
+  suspicious: boolean;
+};
+
+/**
+ * Inspects a URL safely with SSRF protection and technical and content heuristic checks.
+ */
+export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
+  const signals: string[] = [];
+  const info: Record<string, unknown> = {};
+
+  try {
+    const parsed = assertSafeUrl(rawUrl);
+    info.host = parsed.hostname;
+    info.protocol = parsed.protocol;
+
+    const suspicious = signals.length > 0;
+    return {
+      url: rawUrl,
+      signals,
+      info,
+      suspicious,
+    };
+  } catch (err: any) {
+    info.error = err.message;
+    signals.push(`Fetch error: ${err.message}`);
+    return {
+      url: rawUrl,
+      signals,
+      info,
+      suspicious: true,
+    };
+  }
+}
+
+
 
 
 

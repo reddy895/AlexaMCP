@@ -146,8 +146,18 @@ export function extractClaims(text: string): Claim[] {
 
   const claims: Claim[] = [];
   const RE_MONEY = /[₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)\b/i;
+  const RE_PAYMENT = /(pay|fee|deposit|transfer|registration fee|processing fee|refundable)/i;
 
   for (const sentence of rawSentences) {
+    if (RE_PAYMENT.test(sentence)) {
+      claims.push({
+        claim: sentence,
+        type: "payment_request",
+        importance: "high",
+      });
+      continue;
+    }
+
     if (RE_MONEY.test(sentence)) {
       claims.push({
         claim: sentence,
@@ -156,6 +166,7 @@ export function extractClaims(text: string): Claim[] {
       });
       continue;
     }
+
 
     claims.push({
       claim: sentence,

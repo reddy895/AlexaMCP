@@ -39,5 +39,29 @@ export function isPrivateIPv4(ip: string): boolean {
   return false;
 }
 
+/**
+ * Asserts URL safety: valid URL, http/https only, no blocked hosts or private IPs.
+ */
+export function assertSafeUrl(raw: string): URL {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(`Invalid URL format: "${raw}"`);
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(`Forbidden protocol "${parsed.protocol}". Only http: and https: are allowed.`);
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (BLOCKED_HOSTS.has(hostname)) {
+    throw new Error(`Access to blocked host "${hostname}" is forbidden (SSRF protection).`);
+  }
+
+  return parsed;
+}
+
+
 
 

@@ -853,7 +853,48 @@ export function buildServer(): McpServer {
     }
   );
 
+  // 3. inspect_url
+  server.tool(
+    "inspect_url",
+    "Fetch a URL safely (SSRF-protected) and report technical + content signals.",
+    {
+      url: z.string().url(),
+    },
+    async ({ url }) => {
+      const result = await inspectUrl(url);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  // 4. search_evidence
+  server.tool(
+    "search_evidence",
+    "Search the public web (DuckDuckGo) for evidence about a claim, company, domain or offer.",
+    {
+      query: z.string(),
+    },
+    async ({ query }) => {
+      const result = await searchEvidence(query);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
   return server;
+
 }
 
 

@@ -59,8 +59,13 @@ export function assertSafeUrl(raw: string): URL {
     throw new Error(`Access to blocked host "${hostname}" is forbidden (SSRF protection).`);
   }
 
+  if (isPrivateIPv4(hostname)) {
+    throw new Error(`Access to private IP address "${hostname}" is forbidden (SSRF protection).`);
+  }
+
   return parsed;
 }
+
 
 
 

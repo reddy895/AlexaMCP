@@ -147,6 +147,7 @@ export function extractClaims(text: string): Claim[] {
   const claims: Claim[] = [];
   const RE_MONEY = /[₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)\b/i;
   const RE_PAYMENT = /(pay|fee|deposit|transfer|registration fee|processing fee|refundable)/i;
+  const RE_SENSITIVE = /(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)/i;
 
   for (const sentence of rawSentences) {
     if (RE_PAYMENT.test(sentence)) {
@@ -157,6 +158,16 @@ export function extractClaims(text: string): Claim[] {
       });
       continue;
     }
+
+    if (RE_SENSITIVE.test(sentence)) {
+      claims.push({
+        claim: sentence,
+        type: "sensitive_info_request",
+        importance: "high",
+      });
+      continue;
+    }
+
 
     if (RE_MONEY.test(sentence)) {
       claims.push({

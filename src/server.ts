@@ -893,7 +893,59 @@ export function buildServer(): McpServer {
     }
   );
 
+  // 5. cross_reference
+  server.tool(
+    "cross_reference",
+    "Compare extracted claims against collected evidence and highlight conflicts.",
+    {
+      claims: z.array(z.any()),
+      evidence: z.array(z.any()),
+    },
+    async ({ claims, evidence }) => {
+      const result = crossReference(claims, evidence);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  // 6. calculate_risk
+  server.tool(
+    "calculate_risk",
+    "Compute a 0-100 risk score and a verdict from all collected signals.",
+    {
+      claims: z.array(z.any()),
+      redFlags: z.array(z.string()),
+      urlSignals: z.array(z.string()),
+      conflicts: z.array(z.string()),
+      evidenceCount: z.number(),
+    },
+    async ({ claims, redFlags, urlSignals, conflicts, evidenceCount }) => {
+      const result = calculateRisk({
+        claims,
+        redFlags,
+        urlSignals,
+        conflicts,
+        evidenceCount,
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
   return server;
+
 
 }
 

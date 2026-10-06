@@ -256,6 +256,18 @@ export function analyzeMessage(text: string): MessageAnalysis {
   }
   urgencyScore = Math.min(100, Math.max(0, urgencyScore));
 
+  // Red flag: Urgency / pressure language
+
+  if (/(urgent|immediately|within \d+ (hours|minutes|days)|act now|hurry|limited time)/i.test(content)) {
+    redFlags.push("Urgency or pressure tactics detected to compel quick action without thinking");
+  }
+
+  // Red flag: Unsolicited reward / selection language
+  if (/(congratulat(ions)?|selected|winner|won|reward|lottery|prize|chosen|claim your)/i.test(content)) {
+    redFlags.push("Unsolicited reward, lottery, or selection language without prior engagement");
+  }
+
+
 
   return {
     redFlags,

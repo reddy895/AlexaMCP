@@ -16,8 +16,12 @@ export const BLOCKED_HOSTS = new Set([
   "metadata.google.internal",
 ]);
 
+/**
+ * Validates if an IPv4 address belongs to a private or loopback range.
+ * Checks: 10.x, 127.x, 0.x, 172.16-31.x, 192.168.x, 169.254.x
+ */
 export function isPrivateIPv4(ip: string): boolean {
-  const parts = ip.split(".");
+  const parts = ip.trim().split(".");
   if (parts.length !== 4) return false;
   const nums = parts.map((p) => {
     if (!/^\d{1,3}$/.test(p)) return -1;
@@ -34,5 +38,6 @@ export function isPrivateIPv4(ip: string): boolean {
   if (a === 169 && b === 254) return true;
   return false;
 }
+
 
 

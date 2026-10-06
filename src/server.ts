@@ -588,6 +588,137 @@ export const RISK_WEIGHTS = {
   no_evidence: 15,
 } as const;
 
+export type RiskFactor = {
+  factor: string;
+  weight: number;
+};
+
+export type RiskCalculationResult = {
+  score: number;
+  verdict: "HIGH RISK" | "SUSPICIOUS" | "LIKELY SAFE";
+  factors: RiskFactor[];
+};
+
+export type CalculateRiskInput = {
+  claims?: any[];
+  redFlags?: string[];
+  urlSignals?: string[];
+  conflicts?: string[];
+  evidenceCount?: number;
+};
+
+/**
+ * Computes a 0-100 risk score and verdict based on accumulated signals, claims, and evidence conflicts.
+ */
+export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult {
+  const claims = Array.isArray(input.claims) ? input.claims : [];
+  const redFlags = Array.isArray(input.redFlags) ? input.redFlags : [];
+  const urlSignals = Array.isArray(input.urlSignals) ? input.urlSignals : [];
+  const conflicts = Array.isArray(input.conflicts) ? input.conflicts : [];
+  const evidenceCount = typeof input.evidenceCount === "number" ? input.evidenceCount : 0;
+
+  const factors: RiskFactor[] = [];
+
+  // Claim factors
+  if (claims.some((c) => c?.type === "payment_request")) {
+    factors.push({
+      factor: "Payment or upfront fee requested in message claims",
+      weight: RISK_WEIGHTS.payment_request,
+    });
+  }
+
+  if (claims.some((c) => c?.type === "sensitive_info_request")) {
+    factors.push({
+      factor: "Sensitive personal or financial data requested in message claims",
+      weight: RISK_WEIGHTS.sensitive_info_request,
+    });
+  }
+
+  if (claims.some((c) => c?.type === "too_good_to_be_true")) {
+    factors.push({
+      factor: "Too-good-to-be-true promise or unrealistic guarantee in claims",
+      weight: RISK_WEIGHTS.too_good_to_be_true,
+    });
+  }
+
+  if (claims.some((c) => c?.type === "urgency")) {
+    factors.push({
+      factor: "High urgency or pressure tactics in claims",
+      weight: RISK_WEIGHTS.urgency,
+    });
+  }
+
+  // URL factors
+  if (urlSignals.length > 0) {
+    factors.push({
+      factor: `Suspicious URL signals identified (${urlSignals.length} technical/content flags)`,
+      weight: RISK_WEIGHTS.suspicious_url,
+    });
+  }
+
+  // Evidence conflict factors
+  if (conflicts.length > 0) {
+    factors.push({
+      factor: `Direct evidence conflicts and scam reports found (${conflicts.length} conflict items)`,
+      weight: RISK_WEIGHTS.scam_evidence,
+    });
+  }
+
+  // No evidence found
+  if (evidenceCount === 0) {
+    factors.push({
+      factor: "Unverified entity: zero public web evidence or reputation found",
+      weight: RISK_WEIGHTS.no_evidence,
+    });
+  }
+
+  // Red flag content factors
+  for (const rf of redFlags) {
+    const lower = rf.toLowerCase();
+    if (lower.includes("reward") || lower.includes("lottery") || lower.includes("selection")) {
+      factors.push({
+        factor: "Unsolicited reward/selection social engineering red flag",
+        weight: 15,
+      });
+    } else if (lower.includes("earning") || lower.includes("eligibility") || lower.includes("minimal effort")) {
+      factors.push({
+        factor: "Unrealistic earnings or eligibility promise red flag",
+        weight: 15,
+      });
+    } else if (lower.includes("payment") || lower.includes("fee")) {
+      factors.push({
+        factor: "Upfront payment demand red flag",
+        weight: 20,
+      });
+    } else if (lower.includes("sensitive") || lower.includes("credential")) {
+      factors.push({
+        factor: "Credential harvesting or sensitive data request red flag",
+        weight: 20,
+      });
+    }
+  }
+
+  // Calculate sum and clamp 0-100
+  const rawScore = factors.reduce((acc, f) => acc + f.weight, 0);
+  const score = Math.min(100, Math.max(0, rawScore));
+
+  let verdict: "HIGH RISK" | "SUSPICIOUS" | "LIKELY SAFE";
+  if (score >= 70) {
+    verdict = "HIGH RISK";
+  } else if (score >= 35) {
+    verdict = "SUSPICIOUS";
+  } else {
+    verdict = "LIKELY SAFE";
+  }
+
+  return {
+    score,
+    verdict,
+    factors,
+  };
+}
+
+
 
 
 

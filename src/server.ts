@@ -338,6 +338,20 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
     info.host = parsed.hostname;
     info.protocol = parsed.protocol;
 
+    // Risky TLD detection
+    const riskyTlds = ["tk", "ml", "ga", "cf", "gq", "xyz", "top", "work", "click"];
+    const hostParts = parsed.hostname.toLowerCase().split(".");
+    const tld = hostParts[hostParts.length - 1];
+    if (riskyTlds.includes(tld)) {
+      signals.push(`Suspicious / high-risk TLD: .${tld}`);
+    }
+
+    // Raw IPv4 address as hostname
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname)) {
+      signals.push("Hostname is a raw IPv4 address rather than a domain name");
+    }
+
+
     const suspicious = signals.length > 0;
     return {
       url: rawUrl,

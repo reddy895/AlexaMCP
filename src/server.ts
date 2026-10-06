@@ -609,8 +609,13 @@ export type CalculateRiskInput = {
 
 /**
  * Computes a 0-100 risk score and verdict based on accumulated signals, claims, and evidence conflicts.
+ * Thresholds:
+ * - score >= 70 => "HIGH RISK"
+ * - score >= 35 => "SUSPICIOUS"
+ * - otherwise   => "LIKELY SAFE"
  */
 export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult {
+
   const claims = Array.isArray(input.claims) ? input.claims : [];
   const redFlags = Array.isArray(input.redFlags) ? input.redFlags : [];
   const urlSignals = Array.isArray(input.urlSignals) ? input.urlSignals : [];

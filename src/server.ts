@@ -944,7 +944,42 @@ export function buildServer(): McpServer {
     }
   );
 
+  // 7. generate_investigation_report
+  server.tool(
+    "generate_investigation_report",
+    "Assemble the final structured investigation report from all prior tool outputs.",
+    {
+      subject: z.string(),
+      claims: z.array(z.any()),
+      analysis: z.any(),
+      urlFindings: z.array(z.any()),
+      evidence: z.array(z.any()),
+      crossRef: z.any(),
+      risk: z.any(),
+    },
+    async ({ subject, claims, analysis, urlFindings, evidence, crossRef, risk }) => {
+      const result = generateInvestigationReport({
+        subject,
+        claims,
+        analysis,
+        urlFindings,
+        evidence,
+        crossRef,
+        risk,
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
   return server;
+
 
 
 }

@@ -288,6 +288,18 @@ export function analyzeMessage(text: string): MessageAnalysis {
     redFlags.push("Requests sensitive personal, identity, banking, or authentication data");
   }
 
+  // Red flag: URL shortener used (bit.ly, tinyurl, t.co, shorturl, rb.gy)
+  if (/(bit\.ly|tinyurl\.com|t\.co|shorturl\.at|rb\.gy|is\.gd|tiny\.cc)/i.test(content)) {
+    redFlags.push("URL shortener used to mask final destination domain");
+  }
+
+  // Red flag: Excessive exclamation marks (>= 3 "!")
+  const exclamationCount = (content.match(/!/g) || []).length;
+  if (exclamationCount >= 3) {
+    redFlags.push("Excessive exclamation marks conveying artificial excitement or panic");
+  }
+
+
 
 
 

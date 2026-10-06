@@ -76,12 +76,17 @@ export function stripTags(s: string): string {
 
 /**
  * Executes a network fetch with SSRF validation, configurable timeout, and redirection.
+ * - Uses AbortController with configurable timeout (defaults to 8000ms)
+ * - redirect: "follow"
+ * - Sets a standard desktop browser User-Agent
+ * - Returns the fetch Response
  */
 export async function safeFetch(
   url: string | URL,
   opts: RequestInit = {},
   timeoutMs = 8000
 ): Promise<Response> {
+
   const parsedUrl = typeof url === "string" ? assertSafeUrl(url) : assertSafeUrl(url.toString());
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

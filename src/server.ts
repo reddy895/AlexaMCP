@@ -574,8 +574,20 @@ export function crossReference(claims: Claim[], evidence: any[]): CrossReference
     supports,
     evidenceCount: flattenedEvidence.length,
   };
-
 }
+
+export const RISK_WEIGHTS = {
+  payment_request: 25,
+  sensitive_info_request: 25,
+  too_good_to_be_true: 20,
+  urgency: 10,
+  unverified_company: 15,
+  suspicious_url: 20,
+  scam_evidence: 25,
+  conflict: 10,
+  no_evidence: 15,
+} as const;
+
 
 
 

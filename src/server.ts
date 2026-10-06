@@ -547,11 +547,34 @@ export function crossReference(claims: Claim[], evidence: any[]): CrossReference
 
   const foundScamWords = scamWords.filter((w) => evidenceText.includes(w));
 
+  const safeClaims = Array.isArray(claims) ? claims : [];
+  const highImportanceClaims = safeClaims.filter((c) => c && c.importance === "high");
+
+  for (const c of highImportanceClaims) {
+    if (foundScamWords.length > 0) {
+      conflicts.push(
+        `High-importance claim "${c.claim}" conflicts with search evidence containing scam warnings (${foundScamWords.join(", ")})`
+      );
+    } else {
+      supports.push(
+        `No direct scam warnings identified in current search evidence for claim: "${c.claim}"`
+      );
+    }
+  }
+
+  // If there are general conflicts based purely on scam words even without specific high-importance claims
+  if (foundScamWords.length > 0 && highImportanceClaims.length === 0) {
+    conflicts.push(
+      `Search evidence contains prominent scam keywords: ${foundScamWords.join(", ")}`
+    );
+  }
+
   return {
     conflicts,
     supports,
     evidenceCount: flattenedEvidence.length,
   };
+
 }
 
 

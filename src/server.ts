@@ -1020,6 +1020,22 @@ app.post("/mcp", async (req, res) => {
   }
 });
 
+// GET /mcp -> 405
+app.get("/mcp", (_req, res) => {
+  res.status(405).json({ error: "method_not_allowed" });
+});
+
+// DELETE /mcp -> 405
+app.delete("/mcp", (_req, res) => {
+  res.status(405).json({ error: "method_not_allowed" });
+});
+
+// GET /healthz -> { ok: true }
+app.get("/healthz", (_req, res) => {
+  res.status(200).json({ ok: true });
+});
+
+
 
 
 

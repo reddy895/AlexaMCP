@@ -149,6 +149,8 @@ export function extractClaims(text: string): Claim[] {
   const RE_PAYMENT = /(pay|fee|deposit|transfer|registration fee|processing fee|refundable)/i;
   const RE_SENSITIVE = /(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)/i;
   const RE_TOO_GOOD = /(guarantee|100%|risk.?free|no experience|without interview|instant approval)/i;
+  const RE_LINKS = /(click|visit|https?:\/\/|www\.)/i;
+  const RE_URGENCY = /(urgent|immediately|within \d+ (hours|minutes|days)|act now)/i;
 
   for (const sentence of rawSentences) {
     if (RE_PAYMENT.test(sentence)) {
@@ -178,8 +180,6 @@ export function extractClaims(text: string): Claim[] {
       continue;
     }
 
-
-
     if (RE_MONEY.test(sentence)) {
       claims.push({
         claim: sentence,
@@ -189,6 +189,23 @@ export function extractClaims(text: string): Claim[] {
       continue;
     }
 
+    if (RE_URGENCY.test(sentence)) {
+      claims.push({
+        claim: sentence,
+        type: "urgency",
+        importance: "medium",
+      });
+      continue;
+    }
+
+    if (RE_LINKS.test(sentence)) {
+      claims.push({
+        claim: sentence,
+        type: "link",
+        importance: "medium",
+      });
+      continue;
+    }
 
     claims.push({
       claim: sentence,
@@ -196,6 +213,7 @@ export function extractClaims(text: string): Claim[] {
       importance: "low",
     });
   }
+
 
 
   return claims;

@@ -351,6 +351,18 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
       signals.push("Hostname is a raw IPv4 address rather than a domain name");
     }
 
+    // Hostname suspicious keywords (phishing targets)
+    if (/(login|verify|secure|update|account|wallet|bonus|prize)/i.test(parsed.hostname)) {
+      signals.push(`Hostname contains credential or financial bait keyword: "${parsed.hostname}"`);
+    }
+
+    // Hostname hyphen count (typosquatting indicator)
+    const hyphenCount = (parsed.hostname.match(/-/g) || []).length;
+    if (hyphenCount >= 3) {
+      signals.push(`Hostname contains excessive hyphens (${hyphenCount}) indicative of typosquatting`);
+    }
+
+
 
     const suspicious = signals.length > 0;
     return {

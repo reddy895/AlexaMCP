@@ -413,6 +413,104 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
   }
 }
 
+export type EvidenceItem = {
+  title: string;
+  url: string;
+  snippet: string;
+};
+
+export type SearchEvidenceResult = {
+  query: string;
+  results: EvidenceItem[];
+  error?: string;
+};
+
+/**
+ * Searches the public web (DuckDuckGo HTML) for evidence about a claim, company, domain, or offer.
+ */
+export async function searchEvidence(query: string): Promise<SearchEvidenceResult> {
+  const cleanQuery = query.trim();
+  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(cleanQuery)}`;
+
+  try {
+    const response = await safeFetch(searchUrl, {}, 10_000);
+    const html = await response.text();
+
+    const results: EvidenceItem[] = [];
+    // Result blocks on DuckDuckGo HTML search
+    const blockRegex = /<div[^>]*class="[^"]*result\s+results_links[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/gi;
+    let match: RegExpExecArray | null;
+
+    while ((match = blockRegex.exec(html)) !== null && results.length < 6) {
+      const blockHtml = match[1];
+
+      // Extract anchor
+      const linkMatch = blockHtml.match(/<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+      if (!linkMatch) continue;
+
+      let href = linkMatch[1];
+      const rawTitle = linkMatch[2];
+
+      // Decode DuckDuckGo uddg redirect URLs
+      const uddgMatch = href.match(/[?&]uddg=([^&]+)/i);
+      if (uddgMatch) {
+        try {
+          href = decodeURIComponent(uddgMatch[1]);
+        } catch {
+          // ignore decoding errors
+        }
+      }
+
+      // Extract snippet
+      const snippetMatch = blockHtml.match(/<a[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/i)
+        || blockHtml.match(/<div[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+      const rawSnippet = snippetMatch ? snippetMatch[1] : "";
+
+      const title = stripTags(rawTitle).slice(0, 150);
+      const snippet = stripTags(rawSnippet).slice(0, 300);
+
+      results.push({
+        title,
+        url: href,
+        snippet,
+      });
+    }
+
+    // Fallback regex if DuckDuckGo markup layout varies
+    if (results.length === 0) {
+      const fallbackLinkRegex = /<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+      let fMatch: RegExpExecArray | null;
+      while ((fMatch = fallbackLinkRegex.exec(html)) !== null && results.length < 6) {
+        let fHref = fMatch[1];
+        const fTitle = stripTags(fMatch[2]).slice(0, 150);
+        const uddgMatch = fHref.match(/[?&]uddg=([^&]+)/i);
+        if (uddgMatch) {
+          try {
+            fHref = decodeURIComponent(uddgMatch[1]);
+          } catch {}
+        }
+        results.push({
+          title: fTitle,
+          url: fHref,
+          snippet: "",
+        });
+      }
+    }
+
+    return {
+      query: cleanQuery,
+      results,
+    };
+  } catch (err: any) {
+    return {
+      query: cleanQuery,
+      results: [],
+      error: err?.message ?? String(err),
+    };
+  }
+}
+
+
 
 
 

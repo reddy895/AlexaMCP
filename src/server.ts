@@ -145,13 +145,25 @@ export function extractClaims(text: string): Claim[] {
     .filter((s) => s.length > 0);
 
   const claims: Claim[] = [];
+  const RE_MONEY = /[₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)\b/i;
+
   for (const sentence of rawSentences) {
+    if (RE_MONEY.test(sentence)) {
+      claims.push({
+        claim: sentence,
+        type: "financial",
+        importance: "high",
+      });
+      continue;
+    }
+
     claims.push({
       claim: sentence,
       type: "general",
       importance: "low",
     });
   }
+
 
   return claims;
 }

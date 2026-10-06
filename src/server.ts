@@ -133,9 +133,12 @@ export type Claim = {
 };
 
 /**
- * Extracts structured factual claims from a text, segmenting by sentences and newlines.
+ * Extracts structured factual claims from a piece of text.
+ * - Detects financial, payment asks, sensitive data, too-good promises, urgency, and links
+ * - Importance: High for financial/payment/sensitive/too-good, Medium for link/urgency, Low for general
  */
 export function extractClaims(text: string): Claim[] {
+
   if (!text || typeof text !== "string") return [];
 
   // Split on sentence boundaries and newlines

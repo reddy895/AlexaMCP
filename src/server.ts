@@ -277,6 +277,18 @@ export function analyzeMessage(text: string): MessageAnalysis {
     redFlags.push("Absolutes or guarantees offered (100% guarantee / risk-free)");
   }
 
+  // Red flag: Upfront payment request (payment word AND money amount present)
+  const hasPaymentWord = /(pay|fee|deposit|transfer|registration fee|processing fee|refundable)/i.test(content);
+  if (hasPaymentWord && containsMoney) {
+    redFlags.push("Upfront payment or fee requested alongside monetary figures");
+  }
+
+  // Red flag: Requests sensitive personal / financial data
+  if (/(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)/i.test(content)) {
+    redFlags.push("Requests sensitive personal, identity, banking, or authentication data");
+  }
+
+
 
 
 

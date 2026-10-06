@@ -66,6 +66,15 @@ export function assertSafeUrl(raw: string): URL {
   return parsed;
 }
 
+/**
+ * Strips HTML tags from a string and collapses consecutive whitespace characters.
+ */
+export function stripTags(s: string): string {
+  if (!s) return "";
+  return s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+
 
 
 

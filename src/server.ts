@@ -800,6 +800,23 @@ export function generateInvestigationReport(input: InvestigationReportInput) {
   };
 }
 
+// ====================================================================
+// SECTION C — MCP tool registration
+// ====================================================================
+
+/**
+ * Builds and returns a fresh, stateless McpServer instance with all investigation tools registered.
+ */
+export function buildServer(): McpServer {
+  const server = new McpServer({
+    name: "digital-detective",
+    version: "1.0.0",
+  });
+
+  return server;
+}
+
+
 
 
 

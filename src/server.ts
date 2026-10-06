@@ -813,8 +813,49 @@ export function buildServer(): McpServer {
     version: "1.0.0",
   });
 
+  // 1. extract_claims
+  server.tool(
+    "extract_claims",
+    "Extract structured factual claims from a piece of text. Always call this first.",
+    {
+      text: z.string(),
+    },
+    async ({ text }) => {
+      const claims = extractClaims(text);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ claims }, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  // 2. analyze_message
+  server.tool(
+    "analyze_message",
+    "Analyze wording for manipulation, urgency and social-engineering red flags.",
+    {
+      text: z.string(),
+    },
+    async ({ text }) => {
+      const result = analyzeMessage(text);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
   return server;
 }
+
 
 
 

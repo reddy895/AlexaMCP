@@ -132,6 +132,31 @@ export type Claim = {
   importance: "low" | "medium" | "high";
 };
 
+/**
+ * Extracts structured factual claims from a text, segmenting by sentences and newlines.
+ */
+export function extractClaims(text: string): Claim[] {
+  if (!text || typeof text !== "string") return [];
+
+  // Split on sentence boundaries and newlines
+  const rawSentences = text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  const claims: Claim[] = [];
+  for (const sentence of rawSentences) {
+    claims.push({
+      claim: sentence,
+      type: "general",
+      importance: "low",
+    });
+  }
+
+  return claims;
+}
+
+
 
 
 

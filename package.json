@@ -1,0 +1,25 @@
+{
+  "name": "alexa-mcp-digital-detective",
+  "version": "1.0.0",
+  "description": "Alexa + MCP — Digital Detective: Don't just ask. Investigate.",
+  "private": true,
+  "workspaces": [
+    "mcp-server",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"mcp,backend,frontend\" -c \"magenta,blue,cyan\" \"npm run dev --workspace=mcp-server\" \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "dev:mcp": "npm run dev --workspace=mcp-server",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=mcp-server && npm run build --workspace=backend && npm run build --workspace=frontend",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

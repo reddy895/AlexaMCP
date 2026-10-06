@@ -119,5 +119,79 @@ export async function mcpToolsToOllama(client: Client): Promise<OllamaTool[]> {
   }));
 }
 
+// SECTION D — Investigation loop (CRITICAL)
+export async function runInvestigation(
+  client: Client,
+  ollamaTools: OllamaTool[],
+  userInput: string
+): Promise<void> {
+  const messages: OllamaMsg[] = [
+    { role: "system", content: SYSTEM_PROMPT.trim() },
+    { role: "user", content: userInput },
+  ];
+
+  for (let step = 1; step <= MAX_STEPS; step++) {
+    const { message } = await ollamaChat(messages, ollamaTools);
+
+    // FINAL ANSWER PATH
+    if (!message.tool_calls || message.tool_calls.length === 0) {
+      console.log(`\n${colors.boldCyan("==================== INVESTIGATION REPORT ====================")}\n`);
+      console.log(message.content);
+      console.log(`\n${colors.boldCyan("==============================================================")}\n`);
+      return;
+    }
+
+    // Push the assistant turn (with its tool_calls) into history FIRST
+    messages.push({
+      role: "assistant",
+      content: message.content ?? "",
+      tool_calls: message.tool_calls,
+    });
+
+    // Execute every tool call in order
+    for (const call of message.tool_calls) {
+      const name = call.function?.name ?? "unknown_tool";
+      let args = call.function?.arguments;
+      if (typeof args === "string") {
+        try {
+          args = JSON.parse(args);
+        } catch {
+          args = {};
+        }
+      }
+      args = args ?? {};
+
+      const argsPreview = JSON.stringify(args).slice(0, 100);
+      console.log(`${colors.magenta(`▶ ${name}`)} ${colors.dim(argsPreview)}`);
+
+      let text = "";
+      try {
+        const result = await client.callTool({ name, arguments: args });
+        const contentList = (result.content as any[]) ?? [];
+        text = contentList
+          .filter((p: any) => p && p.type === "text")
+          .map((p: any) => p.text)
+          .join("\n");
+
+        const preview = text.replace(/\s+/g, " ").trim().slice(0, 120);
+        console.log(`  ${colors.green("✓")} ${colors.dim(preview)}...`);
+      } catch (err: any) {
+        text = JSON.stringify({ error: err?.message ?? String(err) });
+        console.log(`  ${colors.red("✗")} ${colors.red(err?.message ?? String(err))}`);
+      }
+
+      // Push the tool result back to the LLM
+      messages.push({
+        role: "tool",
+        tool_name: name,
+        content: text,
+      });
+    }
+  }
+
+  console.log(colors.yellow(`\nWarning: Reached maximum investigation steps (${MAX_STEPS}) without a final verdict.`));
+}
+
+
 
 

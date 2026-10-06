@@ -148,6 +148,7 @@ export function extractClaims(text: string): Claim[] {
   const RE_MONEY = /[₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)\b/i;
   const RE_PAYMENT = /(pay|fee|deposit|transfer|registration fee|processing fee|refundable)/i;
   const RE_SENSITIVE = /(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)/i;
+  const RE_TOO_GOOD = /(guarantee|100%|risk.?free|no experience|without interview|instant approval)/i;
 
   for (const sentence of rawSentences) {
     if (RE_PAYMENT.test(sentence)) {
@@ -167,6 +168,16 @@ export function extractClaims(text: string): Claim[] {
       });
       continue;
     }
+
+    if (RE_TOO_GOOD.test(sentence)) {
+      claims.push({
+        claim: sentence,
+        type: "too_good_to_be_true",
+        importance: "high",
+      });
+      continue;
+    }
+
 
 
     if (RE_MONEY.test(sentence)) {

@@ -1,25 +1,22 @@
 {
-  "name": "alexa-mcp-digital-detective",
+  "name": "digital-detective",
   "version": "1.0.0",
-  "description": "Alexa + MCP — Digital Detective: Don't just ask. Investigate.",
-  "private": true,
-  "workspaces": [
-    "mcp-server",
-    "backend",
-    "frontend"
-  ],
+  "type": "module",
   "scripts": {
-    "dev": "concurrently -n \"mcp,backend,frontend\" -c \"magenta,blue,cyan\" \"npm run dev --workspace=mcp-server\" \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
-    "dev:mcp": "npm run dev --workspace=mcp-server",
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "build": "npm run build --workspace=mcp-server && npm run build --workspace=backend && npm run build --workspace=frontend",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "server": "tsx src/server.ts",
+    "agent": "tsx src/agent.ts",
+    "dev": "concurrently -n MCP,AGENT -c cyan,magenta \"npm run server\" \"npm run agent\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "express": "^4.19.2",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.7"
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.5.0",
+    "concurrently": "^9.0.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
   }
 }

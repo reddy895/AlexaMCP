@@ -362,6 +362,30 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
       signals.push(`Hostname contains excessive hyphens (${hyphenCount}) indicative of typosquatting`);
     }
 
+    // Safe network fetch
+    const response = await safeFetch(parsed.toString(), {}, 8000);
+    info.status = response.status;
+    info.contentType = response.headers.get("content-type") ?? "unknown";
+    info.redirectedTo = response.url;
+
+    if (response.url && response.url !== rawUrl && response.url !== parsed.toString()) {
+      signals.push(`Redirected to different URL: "${response.url}"`);
+    }
+
+    const rawBody = await response.text();
+    const body = rawBody.slice(0, 100_000);
+
+    const titleMatch = body.match(/<title[^>]*>([^<]*)<\/title>/i);
+    if (titleMatch) {
+      info.title = stripTags(titleMatch[1]);
+    }
+
+    const metaDescMatch = body.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
+    if (metaDescMatch) {
+      info.description = stripTags(metaDescMatch[1]);
+    }
+
+
 
 
     const suspicious = signals.length > 0;

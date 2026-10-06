@@ -385,6 +385,16 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
       info.description = stripTags(metaDescMatch[1]);
     }
 
+    // Content signals
+    if (/(login|sign in|enter your password|verify your account)/i.test(body)) {
+      signals.push("Page body solicits account credentials or login verification");
+    }
+
+    if (/(pay|payment|upi|registration fee)/i.test(body)) {
+      signals.push("Page body demands payment or registration fee");
+    }
+
+
 
 
 

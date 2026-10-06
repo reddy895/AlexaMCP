@@ -60,3 +60,50 @@ Rules:
 - Never invent tool outputs. Never pretend a tool succeeded.
 `;
 
+// SECTION B — Ollama call
+export type OllamaMsg = {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string;
+  tool_calls?: any[];
+  tool_name?: string;
+};
+
+export type OllamaTool = {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: any;
+  };
+};
+
+export async function ollamaChat(
+  messages: OllamaMsg[],
+  tools: OllamaTool[]
+): Promise<{ message: OllamaMsg }> {
+  const resp = await fetch(`${OLLAMA_URL}/api/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages,
+      tools,
+      stream: false,
+      options: {
+        temperature: 0.2,
+      },
+    }),
+  });
+
+  if (!resp.ok) {
+    const errorBody = await resp.text();
+    throw new Error(`Ollama chat call failed with status ${resp.status}: ${errorBody}`);
+  }
+
+  const json = (await resp.json()) as { message: OllamaMsg };
+  return json;
+}
+
+

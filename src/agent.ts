@@ -106,4 +106,18 @@ export async function ollamaChat(
   return json;
 }
 
+// SECTION C — MCP -> Ollama tool conversion
+export async function mcpToolsToOllama(client: Client): Promise<OllamaTool[]> {
+  const { tools } = await client.listTools();
+  return tools.map((t) => ({
+    type: "function",
+    function: {
+      name: t.name,
+      description: t.description ?? "",
+      parameters: t.inputSchema ?? { type: "object", properties: {} },
+    },
+  }));
+}
+
+
 

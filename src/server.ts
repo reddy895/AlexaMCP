@@ -74,6 +74,41 @@ export function stripTags(s: string): string {
   return s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Executes a network fetch with SSRF validation, configurable timeout, and redirection.
+ */
+export async function safeFetch(
+  url: string | URL,
+  opts: RequestInit = {},
+  timeoutMs = 8000
+): Promise<Response> {
+  const parsedUrl = typeof url === "string" ? assertSafeUrl(url) : assertSafeUrl(url.toString());
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const headers = new Headers(opts.headers);
+    if (!headers.has("User-Agent")) {
+      headers.set(
+        "User-Agent",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 DigitalDetective/1.0"
+      );
+    }
+
+    const response = await fetch(parsedUrl.toString(), {
+      ...opts,
+      headers,
+      redirect: "follow",
+      signal: controller.signal,
+    });
+
+    return response;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+
 
 
 

@@ -394,10 +394,6 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
       signals.push("Page body demands payment or registration fee");
     }
 
-
-
-
-
     const suspicious = signals.length > 0;
     return {
       url: rawUrl,
@@ -406,8 +402,8 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
       suspicious,
     };
   } catch (err: any) {
-    info.error = err.message;
-    signals.push(`Fetch error: ${err.message}`);
+    info.error = err?.message ?? String(err);
+    signals.push(`Fetch error: ${err?.message ?? String(err)}`);
     return {
       url: rawUrl,
       signals,
@@ -416,6 +412,7 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
     };
   }
 }
+
 
 
 

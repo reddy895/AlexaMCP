@@ -979,10 +979,47 @@ export function buildServer(): McpServer {
   );
 
   return server;
-
-
-
 }
+
+// ====================================================================
+// SECTION D — Express + Streamable HTTP transport
+// ====================================================================
+
+export const app = express();
+app.use(express.json({ limit: "1mb" }));
+
+// POST /mcp handler
+app.post("/mcp", async (req, res) => {
+  try {
+    // Normalize accept header so standard HTTP clients and curl work seamlessly with SSE transport
+    if (
+      !req.headers.accept ||
+      req.headers.accept.includes("*/*") ||
+      !req.headers.accept.includes("text/event-stream")
+    ) {
+      req.headers.accept = "application/json, text/event-stream";
+    }
+
+    // FRESH PER REQUEST - stateless
+    const server = buildServer();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+
+    res.on("close", () => {
+      transport.close();
+      server.close();
+    });
+
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  } catch (err: any) {
+    if (!res.headersSent) {
+      res.status(500).json({ error: "internal_error" });
+    }
+  }
+});
+
 
 
 

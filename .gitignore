@@ -1,10 +1,5 @@
-node_modules
-dist
-build
-.env
-data/*.db
-data/*.db-journal
-data/*.db-wal
-data/*.db-shm
+node_modules/
+dist/
 *.log
 .DS_Store
+.env

@@ -427,8 +427,12 @@ export type SearchEvidenceResult = {
 
 /**
  * Searches the public web (DuckDuckGo HTML) for evidence about a claim, company, domain, or offer.
+ * - Extracts up to 6 search results
+ * - Decodes DuckDuckGo uddg redirect URLs
+ * - Strips HTML tags and caps title (150 chars) and snippet (300 chars) lengths
  */
 export async function searchEvidence(query: string): Promise<SearchEvidenceResult> {
+
   const cleanQuery = query.trim();
   const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(cleanQuery)}`;
 

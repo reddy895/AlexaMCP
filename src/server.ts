@@ -706,6 +706,11 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
     score = 25;
   }
 
+  // Rule 2: if any high-importance claim exists, floor at 30.
+  if (claims.some((c: any) => c?.importance === "high") && score < 30) {
+    score = 30;
+  }
+
   let verdict: "HIGH RISK" | "SUSPICIOUS" | "LIKELY SAFE";
   if (score >= 70) {
     verdict = "HIGH RISK";

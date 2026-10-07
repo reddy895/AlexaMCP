@@ -352,8 +352,13 @@ export async function main(): Promise<void> {
         break;
       }
 
+      const urls = extractUrls(trimmed);
+      const augmented = urls.length
+        ? `${trimmed}\n\n[SYSTEM NOTE: The following URLs were found in the input and MUST be inspected with inspect_url using the exact string shown: ${urls.join(", ")}]`
+        : trimmed;
+
       try {
-        await runInvestigation(client, ollamaTools, trimmed);
+        await runInvestigation(client, ollamaTools, augmented);
       } catch (err: any) {
         console.error(colors.red(`Investigation error: ${err?.message ?? String(err)}`));
       }

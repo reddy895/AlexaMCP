@@ -164,6 +164,7 @@ export async function runInvestigation(
   ollamaTools: OllamaTool[],
   userInput: string
 ): Promise<void> {
+  let lastReport: any = null;
   const messages: OllamaMsg[] = [
     { role: "system", content: SYSTEM_PROMPT.trim() },
     { role: "user", content: userInput },
@@ -217,6 +218,14 @@ export async function runInvestigation(
       } catch (err: any) {
         text = JSON.stringify({ error: err?.message ?? String(err) });
         console.log(`  ${colors.red("✗")} ${colors.red(err?.message ?? String(err))}`);
+      }
+
+      if (name === "generate_investigation_report") {
+        try {
+          lastReport = JSON.parse(text);
+        } catch {
+          // ignore silently
+        }
       }
 
       // Push the tool result back to the LLM

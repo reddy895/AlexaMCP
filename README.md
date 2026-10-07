@@ -104,3 +104,6 @@ To prevent contradictions between red flags and risk scores, calibrated floor ru
 
 ## Fix D: Authoritative Report Formatting
 The terminal presentation renders an unmistakable authoritative block with double borders, categorized sections, and non-authoritative model commentary suppressed or relegated.
+
+## Voice Mode (Default Hands-Free)
+The agent now operates in voice mode by default (`DD_MODE=voice`). It listens to user voice input via ALSA `arecord`, performs local transcription via `whisper.cpp`, and announces the verdict via speech synthesis.

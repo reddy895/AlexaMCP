@@ -388,6 +388,10 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
     // Content signals restricted to title and metadata only
     const titleAndMeta = `${info.title ?? ""} ${info.description ?? ""}`;
 
+    if (/(verify your account|enter your password|confirm your card|enter otp)/i.test(titleAndMeta)) {
+      signals.push("Title/metadata demands credentials");
+    }
+
     const suspicious = signals.length > 0;
     return {
       url: rawUrl,

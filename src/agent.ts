@@ -248,13 +248,28 @@ export function extractUrls(text: string): string[] {
 }
 
 // SECTION E — Investigation loop (CRITICAL)
+
+function safeJson(s: string): any {
+  try { return JSON.parse(s); } catch { return null; }
+}
+
 export async function runInvestigation(
   client: Client,
   ollamaTools: OllamaTool[],
   userInput: string
 ): Promise<void> {
   let lastReport: any = null;
+  let reportGenerated = false;
   const seenCalls = new Set<string>();
+
+  // Cached intermediate tool results for plumbing into the report
+  let claimsResult: any = null;
+  let analysisResult: any = null;
+  const urlFindings: any[] = [];
+  let evidenceResults: any[] = [];
+  let crossRefResult: any = null;
+  let riskResult: any = null;
+
   const messages: OllamaMsg[] = [
     { role: "system", content: SYSTEM_PROMPT.trim() },
     { role: "user", content: userInput },

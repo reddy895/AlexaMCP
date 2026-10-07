@@ -231,8 +231,9 @@ export function recordVoice(seconds: number): string {
   }
   console.log(colors.cyan(`🎙 Listening for ${seconds}s... (speak into your microphone now)`));
   const wavPath = "/tmp/dd-input.wav";
+  const devFlag = process.env.DD_MIC_DEVICE ? `-D ${process.env.DD_MIC_DEVICE} ` : "";
   try {
-    execSync(`arecord -d ${seconds} -f cd -t wav -q ${wavPath}`, { stdio: "inherit" });
+    execSync(`arecord ${devFlag}-d ${seconds} -f cd -t wav -q ${wavPath}`, { stdio: "inherit" });
   } catch (err: any) {
     throw new Error(`Failed to record audio with arecord: ${err?.message ?? String(err)}`);
   }

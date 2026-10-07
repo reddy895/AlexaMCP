@@ -43,6 +43,7 @@ async function runContradictionTests() {
   // safeJson unit tests
   console.log("\n[safeJson] JSON parsing resilience:");
   assert("safeJson returns null for invalid JSON", safeJson("invalid json") === null);
+  assert("safeJson returns null for empty string", safeJson("") === null);
   assert("safeJson returns object for valid JSON", safeJson('{"valid":true}')?.valid === true);
 
   // Connect to MCP server

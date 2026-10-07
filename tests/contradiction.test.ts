@@ -56,6 +56,7 @@ async function runContradictionTests() {
   });
   const scamData = JSON.parse((scamRes.content as any)[0].text);
   assert("Job scam produces score >= 40", scamData.score >= 40, `Score was ${scamData.score}`);
+  assert("Job scam has at least 2 factors", scamData.factors.length >= 2);
   assert("Job scam verdict is not LIKELY SAFE", scamData.verdict !== "LIKELY SAFE");
 
   // B4: generate_investigation_report pulls redFlags directly

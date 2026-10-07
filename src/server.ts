@@ -784,8 +784,11 @@ export function generateInvestigationReport(input: InvestigationReportInput) {
   const supportingEvidence = Array.isArray(crossRef.supports) ? crossRef.supports : [];
 
   const risk = input.risk ?? {};
-  const riskScore = typeof risk.score === "number" ? risk.score : 0;
-  const verdict = risk.verdict ?? (riskScore >= 70 ? "HIGH RISK" : riskScore >= 35 ? "SUSPICIOUS" : "LIKELY SAFE");
+  let riskScore = typeof risk.score === "number" ? risk.score : 0;
+  riskScore = calculateRiskFloor(riskScore, redFlags, claims, urlSignals);
+  const verdict = risk.verdict && riskScore === risk.score
+    ? risk.verdict
+    : (riskScore >= 70 ? "HIGH RISK" : riskScore >= 35 ? "SUSPICIOUS" : "LIKELY SAFE");
   const riskFactors = Array.isArray(risk.factors) ? risk.factors : [];
 
   // Recommendation text based on riskScore

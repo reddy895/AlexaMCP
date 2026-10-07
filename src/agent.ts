@@ -400,6 +400,18 @@ export async function runInvestigation(
       }
       seenCalls.add(key);
 
+      // Intercept calculate_risk: populate real cached signals
+      if (name === "calculate_risk") {
+        const cachedEvidenceCount = evidenceResults.filter(Boolean).flatMap((e: any) => e?.results ?? []).length;
+        args = {
+          claims: claimsResult?.claims ?? args.claims ?? [],
+          redFlags: analysisResult?.redFlags ?? args.redFlags ?? [],
+          urlSignals: urlFindings.length ? urlFindings.flatMap((u: any) => (u?.signals ?? []).map((s: string) => `${u.url}: ${s}`)) : (args.urlSignals ?? []),
+          conflicts: crossRefResult?.conflicts ?? args.conflicts ?? [],
+          evidenceCount: cachedEvidenceCount || (typeof args.evidenceCount === "number" ? args.evidenceCount : 0),
+        };
+      }
+
       // Intercept generate_investigation_report: overwrite args with cached real data
       if (name === "generate_investigation_report") {
         args = {

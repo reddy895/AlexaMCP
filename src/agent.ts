@@ -234,11 +234,12 @@ export async function main(): Promise<void> {
     (m) => m === MODEL || m.startsWith(modelPrefix) || m === `${MODEL}:latest`
   );
   if (!hasModel) {
-    console.log(
+    console.error(
       colors.yellow(
-        `Notice: Model "${MODEL}" not found. Run "ollama pull ${MODEL}" to download it.`
+        `⚠ Model "${MODEL}" is not installed.\n  Run: ollama pull ${MODEL}\n  Then re-run the agent.`
       )
     );
+    process.exit(1);
   }
 
   // 3. Connect MCP client

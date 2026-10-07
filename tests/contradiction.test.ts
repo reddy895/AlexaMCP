@@ -45,6 +45,7 @@ async function runContradictionTests() {
   assert("safeJson returns null for invalid JSON", safeJson("invalid json") === null);
   assert("safeJson returns null for empty string", safeJson("") === null);
   assert("safeJson returns object for valid JSON", safeJson('{"valid":true}')?.valid === true);
+  assert("safeJson parses array correctly", Array.isArray(safeJson('[1,2,3]')));
 
   // Connect to MCP server
   const transport = new StreamableHTTPClientTransport(new URL("http://localhost:3001/mcp"));

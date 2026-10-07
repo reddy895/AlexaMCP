@@ -107,3 +107,9 @@ The terminal presentation renders an unmistakable authoritative block with doubl
 
 ## Voice Mode (Default Hands-Free)
 The agent now operates in voice mode by default (`DD_MODE=voice`). It listens to user voice input via ALSA `arecord`, performs local transcription via `whisper.cpp`, and announces the verdict via speech synthesis.
+
+## Contradiction & Signal Tests (B1–B5)
+Run the automated contradiction test suite:
+```bash
+npm run test:contradiction
+```

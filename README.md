@@ -91,3 +91,7 @@ Congratulations! You have been selected for a remote job paying ₹2,50,000 per 
   Start the MCP server first using `npm run server` before running `npm run agent`.
 - **Model produces no tool calls**  
   Ensure your model supports function calling: run `ollama pull qwen2.5:7b` (or `llama3.1:8b` / `mistral-nemo`). Models that do not support tool calling (such as base `llama3` or `gemma`) will not trigger MCP tools.
+
+
+## Fix A: Enforce Report-Only Final Answers
+The agent guarantees that verdicts come exclusively from the authoritative Model Context Protocol tool output rather than LLM memory or hallucination.

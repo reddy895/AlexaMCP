@@ -183,6 +183,25 @@ export function recordVoice(seconds: number): string {
   return wavPath;
 }
 
+export function transcribe(wavPath: string): string {
+  try {
+    execSync(`${WHISPER_BIN} -m "${WHISPER_MODEL}" -f "${wavPath}" -nt -otxt -of /tmp/dd-out`, {
+      stdio: "ignore",
+    });
+  } catch {
+    // Whisper execution failed or binary missing
+  }
+  const outPath = "/tmp/dd-out.txt";
+  if (existsSync(outPath)) {
+    try {
+      return readFileSync(outPath, "utf-8").trim();
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
 export function extractUrls(text: string): string[] {
   const re = /https?:\/\/[^\s<>"')\]]+/g;
   return Array.from(new Set(text.match(re) ?? []));

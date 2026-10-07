@@ -128,6 +128,20 @@ async function runTests() {
   // ---------------------------------------------------------
   // A7: Plain benign input produces LIKELY SAFE
   // ---------------------------------------------------------
+  console.log("\n[Fix C Floor Tests] Score floor rules verification:");
+  const floor1 = await client.callTool({
+    name: "calculate_risk",
+    arguments: {
+      urlSignals: [],
+      redFlags: ["Some red flag"],
+      claims: [],
+      evidenceCount: 1,
+      conflicts: [],
+    },
+  });
+  const floor1Parsed = JSON.parse((floor1.content as any)[0].text);
+  assert("Score floored at 25 when red flags present", floor1Parsed.score >= 25);
+
   console.log("\n[A7] Benign input risk calculation:");
   const benignRisk = await client.callTool({
     name: "calculate_risk",

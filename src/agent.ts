@@ -3,6 +3,7 @@ import { stdin as input, stdout as output } from "node:process";
 import process from "node:process";
 import { execSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
+import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 

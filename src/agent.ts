@@ -13,7 +13,7 @@ export const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
 export const MODEL = process.env.OLLAMA_MODEL ?? "qwen2.5:3b";
 export const NUM_CTX = Number(process.env.OLLAMA_NUM_CTX ?? 4096);
 export const MCP_URL = process.env.MCP_URL ?? "http://localhost:3001/mcp";
-export const MAX_STEPS = 12;
+export const MAX_STEPS = Number(process.env.MAX_STEPS ?? 8);
 
 // ANSI terminal color utilities
 export const colors = {

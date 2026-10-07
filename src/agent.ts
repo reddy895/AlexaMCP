@@ -268,7 +268,7 @@ export function speak(text: string): void {
         execSync(`echo "${trimmed}" | ${PIPER_BIN} --model "${PIPER_MODEL}" --output_file /tmp/dd-out.wav`, {
           stdio: "ignore",
         });
-        execSync("aplay -q /tmp/dd-out.wav", { stdio: "ignore" });
+        try { execSync("aplay -q /tmp/dd-out.wav", { stdio: "ignore" }); } catch {}
         return;
       } catch {
         // Fall back to espeak-ng if piper fails

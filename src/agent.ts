@@ -253,7 +253,9 @@ export function transcribe(wavPath: string): string {
   try { if (existsSync(wavPath)) execSync(`rm -f ${wavPath}`, { stdio: "ignore" }); } catch {}
   if (existsSync(outPath)) {
     try {
-      return readFileSync(outPath, "utf-8").trim();
+      const res = readFileSync(outPath, "utf-8").trim();
+      try { execSync(`rm -f ${outPath}`, { stdio: "ignore" }); } catch {}
+      return res;
     } catch {
       return "";
     }

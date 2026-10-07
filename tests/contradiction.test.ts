@@ -80,6 +80,7 @@ async function runContradictionTests() {
   });
   const reportData = JSON.parse((reportRes.content as any)[0].text);
   assert("Report includes plumbed red flags", reportData.redFlags.includes("Upfront fee"));
+  assert("Report contains at least 2 plumbed red flags", reportData.redFlags.length >= 2);
   assert("Report includes prefixed urlSignals", reportData.urlSignals.some((s: string) => s.includes("http://test.xyz: risky TLD")));
   assert("Report verdict matches authoritative tool risk verdict", reportData.verdict === "HIGH RISK");
 

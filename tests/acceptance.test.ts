@@ -141,6 +141,18 @@ async function runTests() {
   });
   const floor1Parsed = JSON.parse((floor1.content as any)[0].text);
   assert("Score floored at 25 when red flags present", floor1Parsed.score >= 25);
+  const floor2 = await client.callTool({
+    name: "calculate_risk",
+    arguments: {
+      urlSignals: [],
+      redFlags: [],
+      claims: [{ claim: "Pay now", importance: "high", type: "monetary" }],
+      evidenceCount: 1,
+      conflicts: [],
+    },
+  });
+  const floor2Parsed = JSON.parse((floor2.content as any)[0].text);
+  assert("Score floored at 30 when high-importance claim present", floor2Parsed.score >= 30);
 
   console.log("\n[A7] Benign input risk calculation:");
   const benignRisk = await client.callTool({

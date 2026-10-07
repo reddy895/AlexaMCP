@@ -170,6 +170,7 @@ export async function runInvestigation(
   userInput: string
 ): Promise<void> {
   let lastReport: any = null;
+  const seenCalls = new Set<string>();
   const messages: OllamaMsg[] = [
     { role: "system", content: SYSTEM_PROMPT.trim() },
     { role: "user", content: userInput },

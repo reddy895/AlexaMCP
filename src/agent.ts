@@ -316,7 +316,7 @@ export async function runInvestigation(
   const urlFindings: any[] = [];
   let evidenceResults: any[] = [];
   let crossRefResult: any = null;
-  let riskResult: any = null;
+  let riskResult: any = null; // Cache cleared per investigation
 
   const messages: OllamaMsg[] = [
     { role: "system", content: SYSTEM_PROMPT.trim() },

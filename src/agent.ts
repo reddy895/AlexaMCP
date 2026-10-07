@@ -69,6 +69,8 @@ Rules:
     EVIDENCE
     RECOMMENDATION
 - Never invent tool outputs. Never pretend a tool succeeded.
+- If the user text contains a URL, you MUST call inspect_url with the exact URL string. Never pass null.
+- Never call the same tool twice with identical arguments. If a tool returns an error or empty result, change your arguments or move to the next pipeline step.
 `;
 
 // SECTION B — Ollama call

@@ -5,7 +5,8 @@
   "scripts": {
     "server": "tsx src/server.ts",
     "agent": "tsx src/agent.ts",
-    "dev": "concurrently -n MCP,AGENT -c cyan,magenta \"npm run server\" \"npm run agent\""
+    "dev": "concurrently -n MCP,AGENT -c cyan,magenta \"npm run server\" \"npm run agent\"",
+    "test": "tsx tests/acceptance.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.0",

@@ -173,9 +173,14 @@ export function printReport(r: any): void {
     r.evidence.slice(0, 5).forEach((e: any) => console.log(`    • ${e?.title ?? "Evidence"}  —  ${e?.url ?? ""}`));
   }
 
+  if (r?.riskFactors?.length) {
+    console.log("\n  RISK FACTORS:");
+    r.riskFactors.forEach((f: any) => console.log(`    • ${f.factor}  (+${f.weight})`));
+  }
+
   if (r?.recommendation) {
-    console.log(`\n${colors.bold("RECOMMENDATION:")}`);
-    console.log(`  ${r.recommendation}`);
+    console.log("\n  RECOMMENDATION:");
+    console.log(`    ${r.recommendation}`);
   }
 
   console.log(`\n${colors.boldCyan("==============================================================")}\n`);

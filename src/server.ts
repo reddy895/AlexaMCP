@@ -753,9 +753,9 @@ export function generateInvestigationReport(input: InvestigationReportInput) {
   const redFlags = input.analysis?.redFlags ?? (Array.isArray(analysis.redFlags) ? analysis.redFlags : []);
 
   const urlFindings = Array.isArray(input.urlFindings) ? input.urlFindings : [];
-  const urlSignals: string[] = urlFindings.flatMap((u: any) =>
+  const urlSignals: string[] = Array.isArray(urlFindings) ? urlFindings.flatMap((u: any) =>
     (u?.signals ?? []).map((s: string) => (u?.url ? `${u.url}: ${s}` : s))
-  );
+  ) : [];
 
   // Flatten evidence and take top 5
   const rawEvidence = Array.isArray(input.evidence) ? input.evidence : [];

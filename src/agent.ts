@@ -395,7 +395,7 @@ export async function runInvestigation(
       // Intercept generate_investigation_report: overwrite args with cached real data
       if (name === "generate_investigation_report") {
         args = {
-          subject: args.subject ?? userInput.slice(0, 120),
+          subject: args.subject ?? (userInput.trim() ? userInput.slice(0, 120) : "Suspicious Content"),
           claims: claimsResult?.claims ?? args.claims ?? [],
           analysis: analysisResult ?? args.analysis ?? {},
           urlFindings: urlFindings.length ? urlFindings : (args.urlFindings ?? []),

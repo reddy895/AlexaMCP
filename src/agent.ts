@@ -202,6 +202,26 @@ export function transcribe(wavPath: string): string {
   return "";
 }
 
+export function speak(text: string): void {
+  try {
+    const trimmed = text.slice(0, 600).replace(/"/g, '\\"');
+    if (PIPER_MODEL && PIPER_MODEL.trim() !== "" && PIPER_BIN) {
+      try {
+        execSync(`echo "${trimmed}" | ${PIPER_BIN} --model "${PIPER_MODEL}" --output_file /tmp/dd-out.wav`, {
+          stdio: "ignore",
+        });
+        execSync("aplay -q /tmp/dd-out.wav", { stdio: "ignore" });
+        return;
+      } catch {
+        // Fall back to espeak-ng if piper fails
+      }
+    }
+    execSync(`espeak-ng -s 160 -v en-us "${trimmed}"`, { stdio: "ignore" });
+  } catch {
+    // Swallow errors (audio must never crash the agent)
+  }
+}
+
 export function extractUrls(text: string): string[] {
   const re = /https?:\/\/[^\s<>"')\]]+/g;
   return Array.from(new Set(text.match(re) ?? []));

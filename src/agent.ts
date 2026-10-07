@@ -538,6 +538,7 @@ export async function main(): Promise<void> {
   // 5. Interactive readline loop
   if (DD_MODE === "voice") {
     console.log(`🎤 Voice mode — will record ${RECORD_SECONDS}s after each prompt.`);
+    speak("Digital Detective online. Listening for suspicious messages.");
   }
 
   const rl = readline.createInterface({ input, output });

@@ -191,6 +191,15 @@ export function printReport(r: any): void {
   }
 }
 
+export function resolveWhisperBinary(): string {
+  if (process.env.WHISPER_BIN && existsSync(process.env.WHISPER_BIN)) return process.env.WHISPER_BIN;
+  const localBuild = path.resolve("./whisper.cpp/build/bin/whisper-cli");
+  if (existsSync(localBuild)) return localBuild;
+  const homeBuild = path.resolve(process.env.HOME ?? "", "whisper.cpp/build/bin/whisper-cli");
+  if (existsSync(homeBuild)) return homeBuild;
+  return WHISPER_BIN;
+}
+
 export function hasCommand(bin: string): boolean {
   try {
     execSync(`which ${bin}`, { stdio: "ignore" });

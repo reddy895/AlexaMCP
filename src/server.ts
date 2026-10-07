@@ -392,6 +392,10 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
       signals.push("Title/metadata demands credentials");
     }
 
+    if (/(pay fee|registration fee|processing fee|make payment now)/i.test(titleAndMeta)) {
+      signals.push("Title/metadata demands payment");
+    }
+
     const suspicious = signals.length > 0;
     return {
       url: rawUrl,

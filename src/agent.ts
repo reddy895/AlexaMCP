@@ -589,6 +589,7 @@ export async function main(): Promise<void> {
     } catch {
       // ignore
     }
+    if (DD_MODE === "voice") speak("Goodbye.");
     console.log(colors.dim("bye."));
   }
 

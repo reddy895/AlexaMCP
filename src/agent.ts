@@ -280,14 +280,31 @@ export async function runInvestigation(
 
     // FINAL ANSWER PATH
     if (!message.tool_calls || message.tool_calls.length === 0) {
+      // If the report tool was never called, force the model to call it
+      if (!reportGenerated) {
+        messages.push({
+          role: "assistant",
+          content: message.content ?? "",
+        });
+        messages.push({
+          role: "tool",
+          tool_name: "generate_investigation_report",
+          content: JSON.stringify({
+            error: "report_missing",
+            hint: "You must call generate_investigation_report before answering. Call it now with the data from previous tool calls.",
+          }),
+        });
+        console.log(colors.yellow("  ⚠ Model tried to answer without generating report — pushing back"));
+        continue;
+      }
+
+      // Report was generated — always print the structured report
+      printReport(lastReport);
+
+      // Optionally print model commentary below the authoritative report
       if (message.content && message.content.trim()) {
-        console.log(`\n${colors.boldCyan("==================== INVESTIGATION REPORT ====================")}\n`);
-        console.log(message.content);
-        console.log(`\n${colors.boldCyan("==============================================================")}\n`);
-      } else if (lastReport) {
-        printReport(lastReport);
-      } else {
-        console.log("(agent produced no output)");
+        console.log(colors.dim("  Model commentary (non-authoritative):"));
+        console.log(colors.dim(`  ${message.content.trim().slice(0, 500)}`));
       }
       return;
     }

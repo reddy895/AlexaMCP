@@ -240,7 +240,9 @@ export function recordVoice(seconds: number): string {
 
 export function transcribe(wavPath: string): string {
   try {
-    execSync(`${WHISPER_BIN} -m "${WHISPER_MODEL}" -f "${wavPath}" -nt -otxt -of /tmp/dd-out`, {
+    const bin = resolveWhisperBinary();
+    const mdl = resolveWhisperModel();
+    execSync(`${bin} -m "${mdl}" -f "${wavPath}" -nt -otxt -of /tmp/dd-out`, {
       stdio: "ignore",
     });
   } catch {

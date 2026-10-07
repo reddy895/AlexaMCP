@@ -168,13 +168,9 @@ export function printReport(r: any): void {
     r.urlSignals.forEach((f: string) => console.log(`    • ${f}`));
   }
 
-  if (Array.isArray(r?.evidence) && r.evidence.length > 0) {
-    console.log(`\n${colors.bold("EVIDENCE:")}`);
-    for (const item of r.evidence) {
-      const title = item?.title ?? "Evidence";
-      const url = item?.url ? ` — ${item.url}` : "";
-      console.log(`  • ${title}${url}`);
-    }
+  if (r?.evidence?.length) {
+    console.log("\n  EVIDENCE:");
+    r.evidence.slice(0, 5).forEach((e: any) => console.log(`    • ${e?.title ?? "Evidence"}  —  ${e?.url ?? ""}`));
   }
 
   if (r?.recommendation) {

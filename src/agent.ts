@@ -152,8 +152,9 @@ export function printReport(r: any): void {
   console.log("\n" + "═".repeat(60));
   console.log("  INVESTIGATION REPORT  (authoritative)");
   console.log("═".repeat(60));
-  console.log(`${colors.bold("VERDICT:")} ${r?.verdict ?? "UNKNOWN"}`);
-  console.log(`${colors.bold("RISK SCORE:")} ${r?.riskScore ?? 0}/100`);
+  console.log(`  VERDICT:      ${r?.verdict ?? "UNKNOWN"}`);
+  console.log(`  RISK SCORE:   ${r?.riskScore ?? 0}/100`);
+  console.log("─".repeat(60));
 
   if (Array.isArray(r?.redFlags) && r.redFlags.length > 0) {
     console.log(`\n${colors.bold("RED FLAGS:")}`);

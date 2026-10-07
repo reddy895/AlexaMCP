@@ -213,6 +213,21 @@ export async function runInvestigation(
       }
       args = args ?? {};
 
+      const key = name + "|" + JSON.stringify(args);
+      if (seenCalls.has(key)) {
+        messages.push({
+          role: "tool",
+          tool_name: name,
+          content: JSON.stringify({
+            error: "duplicate_call",
+            hint: "You already called this tool with these exact arguments. Use different arguments, or proceed to the next pipeline step.",
+          }),
+        });
+        console.log(`  ${colors.yellow(`⏭  skipped duplicate ${name}`)}`);
+        continue;
+      }
+      seenCalls.add(key);
+
       const argsPreview = JSON.stringify(args).slice(0, 100);
       console.log(`${colors.magenta(`▶ ${name}`)} ${colors.dim(argsPreview)}`);
 

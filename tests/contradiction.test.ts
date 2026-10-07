@@ -30,6 +30,8 @@ async function runContradictionTests() {
   assert("Rule 2 lifts existing 15 to 30", f2WithExisting === 30);
   assert("Score floored at 30 for high importance claim", f2 === 30);
   const f3 = calculateRiskFloor(0, ["Red flag"], [], ["URL signal"]);
+  const f3WithExisting = calculateRiskFloor(20, ["Red flag"], [], ["URL signal"]);
+  assert("Rule 3 lifts existing 20 to 40", f3WithExisting === 40);
   assert("Score floored at 40 for concurrent URL and red flag", f3 === 40);
 
   // B3: Benign input produces score 0

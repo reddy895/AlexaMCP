@@ -243,7 +243,12 @@ export async function runInvestigation(
     }
   }
 
-  console.log(colors.yellow(`\nWarning: Reached maximum investigation steps (${MAX_STEPS}) without a final verdict.`));
+  console.log(colors.yellow("\n⚠ Max steps reached — printing best-available report:"));
+  if (lastReport) {
+    printReport(lastReport);
+  } else {
+    console.log("(no report was generated)");
+  }
 }
 
 // ====================================================================

@@ -274,7 +274,11 @@ export function speak(text: string): void {
         // Fall back to espeak-ng if piper fails
       }
     }
-    execSync(`espeak-ng -s 160 -v en-us "${trimmed}"`, { stdio: "ignore" });
+    if (hasCommand("espeak-ng")) {
+      execSync(`espeak-ng -s 160 -v en-us "${trimmed}"`, { stdio: "ignore" });
+    } else if (hasCommand("spd-say")) {
+      execSync(`spd-say "${trimmed}"`, { stdio: "ignore" });
+    }
   } catch {
     // Swallow errors (audio must never crash the agent)
   }

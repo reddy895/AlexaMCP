@@ -229,9 +229,9 @@ export async function main(): Promise<void> {
   const availableModels: string[] = (tagsData.models ?? []).map(
     (m: any) => m.name ?? m.model ?? ""
   );
-  const modelPrefix = MODEL.split(":")[0];
+  const modelPrefix = MODEL.includes(":") ? MODEL : `${MODEL}:`;
   const hasModel = availableModels.some(
-    (m) => m === MODEL || m.startsWith(modelPrefix)
+    (m) => m === MODEL || m.startsWith(modelPrefix) || m === `${MODEL}:latest`
   );
   if (!hasModel) {
     console.log(

@@ -175,9 +175,15 @@ export async function runInvestigation(
 
     // FINAL ANSWER PATH
     if (!message.tool_calls || message.tool_calls.length === 0) {
-      console.log(`\n${colors.boldCyan("==================== INVESTIGATION REPORT ====================")}\n`);
-      console.log(message.content);
-      console.log(`\n${colors.boldCyan("==============================================================")}\n`);
+      if (message.content && message.content.trim()) {
+        console.log(`\n${colors.boldCyan("==================== INVESTIGATION REPORT ====================")}\n`);
+        console.log(message.content);
+        console.log(`\n${colors.boldCyan("==============================================================")}\n`);
+      } else if (lastReport) {
+        printReport(lastReport);
+      } else {
+        console.log("(agent produced no output)");
+      }
       return;
     }
 

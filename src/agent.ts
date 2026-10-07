@@ -399,7 +399,7 @@ export async function runInvestigation(
           claims: claimsResult?.claims ?? args.claims ?? [],
           analysis: analysisResult ?? args.analysis ?? {},
           urlFindings: urlFindings.length ? urlFindings : (args.urlFindings ?? []),
-          evidence: evidenceResults.flatMap((e: any) => e?.results ?? []).length
+          evidence: evidenceResults.filter(Boolean).flatMap((e: any) => e?.results ?? []).length
             ? evidenceResults.flatMap((e: any) => e?.results ?? [])
             : (args.evidence ?? []),
           crossRef: crossRefResult ?? args.crossRef ?? {},

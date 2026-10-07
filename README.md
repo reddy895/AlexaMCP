@@ -95,3 +95,6 @@ Congratulations! You have been selected for a remote job paying ₹2,50,000 per 
 
 ## Fix A: Enforce Report-Only Final Answers
 The agent guarantees that verdicts come exclusively from the authoritative Model Context Protocol tool output rather than LLM memory or hallucination.
+
+## Fix B: Intermediate Tool Plumbing
+Intermediate outputs across `extract_claims`, `analyze_message`, `inspect_url`, and `calculate_risk` are cached and directly plumbed into the final report.

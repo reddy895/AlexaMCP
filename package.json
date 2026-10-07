@@ -8,7 +8,8 @@
     "dev": "concurrently -n MCP,AGENT -c cyan,magenta \"npm run server\" \"npm run agent\"",
     "test": "tsx tests/acceptance.test.ts",
     "test:contradiction": "tsx tests/contradiction.test.ts",
-    "test:all": "tsx tests/acceptance.test.ts && tsx tests/contradiction.test.ts"
+    "test:all": "tsx tests/acceptance.test.ts && tsx tests/contradiction.test.ts",
+    "agent:voice": "DD_MODE=voice tsx src/agent.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.0",

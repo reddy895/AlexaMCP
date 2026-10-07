@@ -1054,9 +1054,12 @@ app.get("/healthz", (_req, res) => {
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
-app.listen(PORT, () => {
-  console.error(`[mcp] Digital Detective MCP server on http://localhost:${PORT}/mcp`);
-});
+const isMain = !process.argv[1] || process.argv[1].endsWith("server.ts") || process.argv[1].endsWith("server.js");
+if (isMain) {
+  app.listen(PORT, () => {
+    console.error(`[mcp] Digital Detective MCP server on http://localhost:${PORT}/mcp`);
+  });
+}
 
 
 

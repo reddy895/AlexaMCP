@@ -848,7 +848,7 @@ export function buildServer(): McpServer {
   // 3. inspect_url
   server.tool(
     "inspect_url",
-    "Fetch a URL safely (SSRF-protected) and report technical + content signals.",
+    "Fetch a URL safely (SSRF-protected) and report signals. Input MUST be the exact URL string, never null. If no URL exists in the input, do not call this tool.",
     {
       url: z.string().url(),
     },

@@ -711,6 +711,11 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
     score = 30;
   }
 
+  // Rule 3: if the message contains a URL AND red flags, floor at 40.
+  if (urlSignals.length > 0 && redFlags.length > 0 && score < 40) {
+    score = 40;
+  }
+
   let verdict: "HIGH RISK" | "SUSPICIOUS" | "LIKELY SAFE";
   if (score >= 70) {
     verdict = "HIGH RISK";

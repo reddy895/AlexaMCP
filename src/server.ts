@@ -441,19 +441,15 @@ export async function searchEvidence(query: string): Promise<SearchEvidenceResul
     const html = await response.text();
 
     const results: EvidenceItem[] = [];
-    // Result blocks on DuckDuckGo HTML search
-    const blockRegex = /<div[^>]*class="[^"]*result\s+results_links[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/gi;
+    // Result blocks on DuckDuckGo HTML search: <a class="result__a" ...>TITLE</a> ... <a class="result__snippet" ...>SNIPPET</a>
+    const pairRegex =
+      /<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/gi;
     let match: RegExpExecArray | null;
 
-    while ((match = blockRegex.exec(html)) !== null && results.length < 6) {
-      const blockHtml = match[1];
-
-      // Extract anchor
-      const linkMatch = blockHtml.match(/<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
-      if (!linkMatch) continue;
-
-      let href = linkMatch[1];
-      const rawTitle = linkMatch[2];
+    while ((match = pairRegex.exec(html)) !== null && results.length < 6) {
+      let href = match[1];
+      const rawTitle = match[2];
+      const rawSnippet = match[3];
 
       // Decode DuckDuckGo uddg redirect URLs
       const uddgMatch = href.match(/[?&]uddg=([^&]+)/i);
@@ -465,11 +461,6 @@ export async function searchEvidence(query: string): Promise<SearchEvidenceResul
         }
       }
 
-      // Extract snippet
-      const snippetMatch = blockHtml.match(/<a[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/i)
-        || blockHtml.match(/<div[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-      const rawSnippet = snippetMatch ? snippetMatch[1] : "";
-
       const title = stripTags(rawTitle).slice(0, 150);
       const snippet = stripTags(rawSnippet).slice(0, 300);
 
@@ -480,7 +471,7 @@ export async function searchEvidence(query: string): Promise<SearchEvidenceResul
       });
     }
 
-    // Fallback regex if DuckDuckGo markup layout varies
+    // Fallback regex if snippets are formatted in div or different tag
     if (results.length === 0) {
       const fallbackLinkRegex = /<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
       let fMatch: RegExpExecArray | null;
@@ -500,6 +491,7 @@ export async function searchEvidence(query: string): Promise<SearchEvidenceResul
         });
       }
     }
+
 
     return {
       query: cleanQuery,

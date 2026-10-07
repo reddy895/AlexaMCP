@@ -396,7 +396,7 @@ export async function inspectUrl(rawUrl: string): Promise<UrlInspectionResult> {
       signals.push("Title/metadata demands payment");
     }
 
-    const suspicious = signals.length > 0;
+    const suspicious = signals.length >= 2;
     return {
       url: rawUrl,
       signals,

@@ -18,7 +18,7 @@ export const MCP_URL = process.env.MCP_URL ?? "http://localhost:3001/mcp";
 export const MAX_STEPS = Number(process.env.MAX_STEPS ?? 8);
 
 // Voice config
-export const DD_MODE = process.env.DD_MODE ?? "text"; // "text" | "voice"
+export const DD_MODE = process.env.DD_MODE ?? "voice"; // "text" | "voice" (voice default)
 export const WHISPER_BIN = process.env.WHISPER_BIN ?? "whisper-cli";
 export const WHISPER_MODEL = process.env.WHISPER_MODEL ?? "models/ggml-base.en.bin";
 export const PIPER_BIN = process.env.PIPER_BIN ?? "piper";

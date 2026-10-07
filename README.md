@@ -8,9 +8,9 @@ Digital Detective is an AI-powered fraud and scam investigation agent built for 
 - **Ollama** installed and running (`ollama serve`)
 - A tool-calling LLM model:
   ```bash
-  ollama pull qwen2.5:7b
+  ollama pull qwen2.5:3b
   ```
-  *(or `llama3.1:8b`, `mistral-nemo`, or `qwen2.5:1.5b`)*
+  *(or `qwen2.5:1.5b`, `llama3.1:8b`, or `mistral-nemo`)*
 
 ## Install
 
@@ -35,6 +35,28 @@ Or run both concurrently in a single terminal:
 ```bash
 npm run dev
 ```
+
+## Voice mode (Linux)
+
+Prereqs:
+```bash
+sudo apt install alsa-utils espeak-ng
+# whisper.cpp:
+git clone https://github.com/ggerganov/whisper.cpp && cd whisper.cpp
+make && bash models/download-ggml-model.sh base.en
+```
+
+Run:
+```bash
+DD_MODE=voice \
+WHISPER_BIN=$HOME/whisper.cpp/build/bin/whisper-cli \
+WHISPER_MODEL=$HOME/whisper.cpp/models/ggml-base.en.bin \
+OLLAMA_MODEL=qwen2.5:3b \
+npm run agent
+```
+
+Optional better TTS with piper:
+  set `PIPER_BIN` and `PIPER_MODEL` env vars.
 
 ## Example Input
 

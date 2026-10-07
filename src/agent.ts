@@ -233,7 +233,8 @@ export function recordVoice(seconds: number): string {
   const wavPath = "/tmp/dd-input.wav";
   const devFlag = process.env.DD_MIC_DEVICE ? `-D ${process.env.DD_MIC_DEVICE} ` : "";
   try {
-    execSync(`arecord ${devFlag}-d ${seconds} -f cd -t wav -q ${wavPath}`, { stdio: "inherit" });
+    const rateFlag = process.env.DD_SAMPLE_RATE ? `-r ${process.env.DD_SAMPLE_RATE} ` : "";
+    execSync(`arecord ${devFlag}${rateFlag}-d ${seconds} -f cd -t wav -q ${wavPath}`, { stdio: "inherit" });
   } catch (err: any) {
     throw new Error(`Failed to record audio with arecord: ${err?.message ?? String(err)}`);
   }

@@ -123,6 +123,7 @@ async function runTests() {
   const riskParsed = JSON.parse((riskRes.content as any)[0].text);
   assert("Risk score is >= 70 (HIGH RISK)", riskParsed.score >= 70, `Score was: ${riskParsed.score}`);
   assert("Verdict is HIGH RISK", riskParsed.verdict === "HIGH RISK");
+  assert("Risk score is floored at least 40 when URL and red flags present", riskParsed.score >= 40);
 
   // ---------------------------------------------------------
   // A7: Plain benign input produces LIKELY SAFE

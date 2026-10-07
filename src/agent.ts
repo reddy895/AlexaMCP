@@ -294,6 +294,10 @@ export function speak(text: string): void {
   }
 }
 
+export function sanitizeSubject(text: string): string {
+  return text.trim().slice(0, 120) || "Suspicious Message";
+}
+
 export function extractUrls(text: string): string[] {
   const re = /https?:\/\/[^\s<>"')\]]+/g;
   return Array.from(new Set(text.match(re) ?? []));

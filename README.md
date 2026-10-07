@@ -101,3 +101,6 @@ Intermediate outputs across `extract_claims`, `analyze_message`, `inspect_url`, 
 
 ## Fix C: Risk Score Floors
 To prevent contradictions between red flags and risk scores, calibrated floor rules ensure that messages with red flags or high-importance claims receive minimum risk scores.
+
+## Fix D: Authoritative Report Formatting
+The terminal presentation renders an unmistakable authoritative block with double borders, categorized sections, and non-authoritative model commentary suppressed or relegated.

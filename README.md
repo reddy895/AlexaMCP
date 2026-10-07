@@ -98,3 +98,6 @@ The agent guarantees that verdicts come exclusively from the authoritative Model
 
 ## Fix B: Intermediate Tool Plumbing
 Intermediate outputs across `extract_claims`, `analyze_message`, `inspect_url`, and `calculate_risk` are cached and directly plumbed into the final report.
+
+## Fix C: Risk Score Floors
+To prevent contradictions between red flags and risk scores, calibrated floor rules ensure that messages with red flags or high-importance claims receive minimum risk scores.

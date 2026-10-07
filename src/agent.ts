@@ -190,6 +190,15 @@ export function printReport(r: any): void {
   }
 }
 
+export function hasCommand(bin: string): boolean {
+  try {
+    execSync(`which ${bin}`, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function recordVoice(seconds: number): string {
   try {
     execSync("which arecord", { stdio: "ignore" });

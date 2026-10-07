@@ -149,7 +149,9 @@ export async function mcpToolsToOllama(client: Client): Promise<OllamaTool[]> {
 
 // SECTION D — Investigation reporting helper
 export function printReport(r: any): void {
-  console.log(`\n${colors.boldCyan("==================== INVESTIGATION REPORT ====================")}\n`);
+  console.log("\n" + "═".repeat(60));
+  console.log("  INVESTIGATION REPORT  (authoritative)");
+  console.log("═".repeat(60));
   console.log(`${colors.bold("VERDICT:")} ${r?.verdict ?? "UNKNOWN"}`);
   console.log(`${colors.bold("RISK SCORE:")} ${r?.riskScore ?? 0}/100`);
 

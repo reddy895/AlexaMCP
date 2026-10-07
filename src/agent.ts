@@ -478,7 +478,7 @@ export async function main(): Promise<void> {
     colors.cyan(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║          ALEXA + MCP — DIGITAL DETECTIVE AGENT                ║
-║  Local Inference: ${MODEL.padEnd(16)} MCP: ${MCP_URL.padEnd(20)}║
+║  Model: ${MODEL.padEnd(12)} Mode: ${(DD_MODE.toUpperCase()).padEnd(8)} MCP: ${MCP_URL.padEnd(15)}║
 ╚═══════════════════════════════════════════════════════════════╝
 `)
   );

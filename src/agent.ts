@@ -191,6 +191,20 @@ export function printReport(r: any): void {
   }
 }
 
+export function resolveWhisperModel(): string {
+  if (process.env.WHISPER_MODEL && existsSync(process.env.WHISPER_MODEL)) return process.env.WHISPER_MODEL;
+  const candidates = [
+    "./whisper.cpp/models/ggml-base.en.bin",
+    "./whisper.cpp/models/ggml-tiny.en.bin",
+    path.resolve(process.env.HOME ?? "", "whisper.cpp/models/ggml-base.en.bin"),
+    "models/ggml-base.en.bin",
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  return WHISPER_MODEL;
+}
+
 export function resolveWhisperBinary(): string {
   if (process.env.WHISPER_BIN && existsSync(process.env.WHISPER_BIN)) return process.env.WHISPER_BIN;
   const localBuild = path.resolve("./whisper.cpp/build/bin/whisper-cli");

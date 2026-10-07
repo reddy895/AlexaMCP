@@ -183,7 +183,7 @@ export function printReport(r: any): void {
     console.log(`    ${r.recommendation}`);
   }
 
-  console.log(`\n${colors.boldCyan("==============================================================")}\n`);
+  console.log("═".repeat(60) + "\n");
 
   if (DD_MODE === "voice") {
     speak(`${r?.verdict ?? "UNKNOWN"}. Risk score ${r?.riskScore ?? 0} out of 100. ${r?.recommendation ?? ""}`);

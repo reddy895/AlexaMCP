@@ -699,7 +699,7 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
 
   // Calculate sum and clamp 0-100
   const rawScore = factors.reduce((acc, f) => acc + f.weight, 0);
-  const score = Math.min(100, Math.max(0, rawScore));
+  let score = Math.min(100, Math.max(0, rawScore));
 
   let verdict: "HIGH RISK" | "SUSPICIOUS" | "LIKELY SAFE";
   if (score >= 70) {

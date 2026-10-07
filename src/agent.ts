@@ -414,28 +414,44 @@ export async function main(): Promise<void> {
   }
 
   // 5. Interactive readline loop
+  if (DD_MODE === "voice") {
+    console.log(`🎤 Voice mode — will record ${RECORD_SECONDS}s after each prompt.`);
+  }
+
   const rl = readline.createInterface({ input, output });
 
   try {
     while (true) {
       let line: string;
-      try {
-        line = await rl.question(colors.boldCyan("detective› "));
-      } catch {
-        // stdin stream closed (EOF)
-        break;
+      if (DD_MODE === "voice") {
+        try {
+          const wav = recordVoice(RECORD_SECONDS);
+          line = transcribe(wav).trim();
+        } catch (err: any) {
+          console.error(colors.red(err?.message ?? String(err)));
+          continue;
+        }
+        console.log(`detective› ${line}`);
+        if (!line) {
+          console.log("(heard nothing)");
+          continue;
+        }
+      } else {
+        try {
+          line = (await rl.question("detective› ")).trim();
+        } catch {
+          // stdin stream closed (EOF)
+          break;
+        }
       }
 
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      if (["exit", "quit", ":q"].includes(trimmed.toLowerCase())) {
-        break;
-      }
+      if (!line) continue;
+      if (["exit", "quit", ":q"].includes(line.toLowerCase())) break;
 
-      const urls = extractUrls(trimmed);
+      const urls = extractUrls(line);
       const augmented = urls.length
-        ? `${trimmed}\n\n[SYSTEM NOTE: The following URLs were found in the input and MUST be inspected with inspect_url using the exact string shown: ${urls.join(", ")}]`
-        : trimmed;
+        ? `${line}\n\n[SYSTEM NOTE: The following URLs were found in the input and MUST be inspected with inspect_url using the exact string shown: ${urls.join(", ")}]`
+        : line;
 
       try {
         await runInvestigation(client, ollamaTools, augmented);

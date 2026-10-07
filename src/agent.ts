@@ -250,6 +250,7 @@ export function transcribe(wavPath: string): string {
     // Whisper execution failed or binary missing
   }
   const outPath = "/tmp/dd-out.txt";
+  try { if (existsSync(wavPath)) execSync(`rm -f ${wavPath}`, { stdio: "ignore" }); } catch {}
   if (existsSync(outPath)) {
     try {
       return readFileSync(outPath, "utf-8").trim();

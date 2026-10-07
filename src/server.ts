@@ -716,6 +716,7 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
     score = 40;
   }
 
+  // Recompute verdict based on calibrated floored score
   let verdict: "HIGH RISK" | "SUSPICIOUS" | "LIKELY SAFE";
   if (score >= 70) {
     verdict = "HIGH RISK";

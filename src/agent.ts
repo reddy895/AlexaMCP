@@ -344,6 +344,21 @@ export async function runInvestigation(
       }
       seenCalls.add(key);
 
+      // Intercept generate_investigation_report: overwrite args with cached real data
+      if (name === "generate_investigation_report") {
+        args = {
+          subject: args.subject ?? userInput.slice(0, 120),
+          claims: claimsResult?.claims ?? args.claims ?? [],
+          analysis: analysisResult ?? args.analysis ?? {},
+          urlFindings: urlFindings.length ? urlFindings : (args.urlFindings ?? []),
+          evidence: evidenceResults.flatMap((e: any) => e?.results ?? []).length
+            ? evidenceResults.flatMap((e: any) => e?.results ?? [])
+            : (args.evidence ?? []),
+          crossRef: crossRefResult ?? args.crossRef ?? {},
+          risk: riskResult ?? args.risk ?? {},
+        };
+      }
+
       const argsPreview = JSON.stringify(args).slice(0, 100);
       console.log(`${colors.magenta(`▶ ${name}`)} ${colors.dim(argsPreview)}`);
 
@@ -363,9 +378,18 @@ export async function runInvestigation(
         console.log(`  ${colors.red("✗")} ${colors.red(err?.message ?? String(err))}`);
       }
 
+      // Cache intermediate tool results
+      if (name === "extract_claims") claimsResult = safeJson(text);
+      if (name === "analyze_message") analysisResult = safeJson(text);
+      if (name === "inspect_url") urlFindings.push(safeJson(text));
+      if (name === "search_evidence") evidenceResults.push(safeJson(text));
+      if (name === "cross_reference") crossRefResult = safeJson(text);
+      if (name === "calculate_risk") riskResult = safeJson(text);
+
       if (name === "generate_investigation_report") {
         try {
           lastReport = JSON.parse(text);
+          reportGenerated = true;
         } catch {
           // ignore silently
         }

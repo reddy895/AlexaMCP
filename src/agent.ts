@@ -163,11 +163,9 @@ export function printReport(r: any): void {
     console.log("\n  RED FLAGS: none detected");
   }
 
-  if (Array.isArray(r?.urlSignals) && r.urlSignals.length > 0) {
-    console.log(`\n${colors.bold("URL SIGNALS:")}`);
-    for (const signal of r.urlSignals) {
-      console.log(`  • ${signal}`);
-    }
+  if (r?.urlSignals?.length) {
+    console.log("\n  URL SIGNALS:");
+    r.urlSignals.forEach((f: string) => console.log(`    • ${f}`));
   }
 
   if (Array.isArray(r?.evidence) && r.evidence.length > 0) {

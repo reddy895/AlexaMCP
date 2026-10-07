@@ -156,11 +156,11 @@ export function printReport(r: any): void {
   console.log(`  RISK SCORE:   ${r?.riskScore ?? 0}/100`);
   console.log("─".repeat(60));
 
-  if (Array.isArray(r?.redFlags) && r.redFlags.length > 0) {
-    console.log(`\n${colors.bold("RED FLAGS:")}`);
-    for (const flag of r.redFlags) {
-      console.log(`  • ${flag}`);
-    }
+  if (r?.redFlags?.length) {
+    console.log("\n  RED FLAGS:");
+    r.redFlags.forEach((f: string) => console.log(`    • ${f}`));
+  } else {
+    console.log("\n  RED FLAGS: none detected");
   }
 
   if (Array.isArray(r?.urlSignals) && r.urlSignals.length > 0) {

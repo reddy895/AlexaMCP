@@ -158,6 +158,11 @@ export function printReport(r: any): void {
   console.log(`\n${colors.boldCyan("==============================================================")}\n`);
 }
 
+export function extractUrls(text: string): string[] {
+  const re = /https?:\/\/[^\s<>"')\]]+/g;
+  return Array.from(new Set(text.match(re) ?? []));
+}
+
 // SECTION E — Investigation loop (CRITICAL)
 export async function runInvestigation(
   client: Client,

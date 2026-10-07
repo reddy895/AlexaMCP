@@ -261,6 +261,7 @@ export function transcribe(wavPath: string): string {
 }
 
 export function speak(text: string): void {
+  console.log(colors.dim(`🔊 [Audio Output] ${text.slice(0, 80)}...`));
   try {
     const trimmed = text.slice(0, 600).replace(/"/g, '\\"');
     if (PIPER_MODEL && PIPER_MODEL.trim() !== "" && PIPER_BIN) {

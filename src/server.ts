@@ -750,7 +750,7 @@ export function generateInvestigationReport(input: InvestigationReportInput) {
   const subject = input.subject ?? "Suspicious Content";
   const claims = Array.isArray(input.claims) ? input.claims : [];
   const analysis = input.analysis ?? {};
-  const redFlags = Array.isArray(analysis.redFlags) ? analysis.redFlags : [];
+  const redFlags = input.analysis?.redFlags ?? (Array.isArray(analysis.redFlags) ? analysis.redFlags : []);
 
   const urlFindings = Array.isArray(input.urlFindings) ? input.urlFindings : [];
   const urlSignals: string[] = [];

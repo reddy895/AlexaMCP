@@ -94,6 +94,7 @@ export async function ollamaChat(
       stream: false,
       options: {
         temperature: 0.2,
+        num_ctx: NUM_CTX,
       },
     }),
   });

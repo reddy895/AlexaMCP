@@ -22,6 +22,7 @@ async function runContradictionTests() {
   console.log("[B5] Red flags never produce score 0:");
   const f1 = calculateRiskFloor(0, ["Suspicious greeting"], [], []);
   assert("Score floored at 25 for red flag", f1 === 25);
+  assert("Score floor is greater than zero for any red flag", f1 > 0);
   const f2 = calculateRiskFloor(0, [], [{ importance: "high" }], []);
   assert("Score floored at 30 for high importance claim", f2 === 30);
   const f3 = calculateRiskFloor(0, ["Red flag"], [], ["URL signal"]);

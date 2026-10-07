@@ -701,7 +701,7 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
   const rawScore = factors.reduce((acc, f) => acc + f.weight, 0);
   let score = Math.min(100, Math.max(0, rawScore));
 
-  // Rule 1: if there are red flags, floor the score at 25.
+  // Rule 1 (Fix C): if there are red flags, floor the score at 25.
   if (redFlags.length > 0 && score < 25) {
     score = 25;
   }

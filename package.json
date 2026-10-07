@@ -9,7 +9,8 @@
     "test": "tsx tests/acceptance.test.ts",
     "test:contradiction": "tsx tests/contradiction.test.ts",
     "test:all": "tsx tests/acceptance.test.ts && tsx tests/contradiction.test.ts",
-    "agent:voice": "DD_MODE=voice tsx src/agent.ts"
+    "agent:voice": "DD_MODE=voice tsx src/agent.ts",
+    "agent:text": "DD_MODE=text tsx src/agent.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.0",

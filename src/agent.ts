@@ -297,7 +297,7 @@ export function extractUrls(text: string): string[] {
 
 // SECTION E — Investigation loop (CRITICAL)
 
-function safeJson(s: string): any {
+export function safeJson(s: string): any {
   try { return JSON.parse(s); } catch { return null; }
 }
 

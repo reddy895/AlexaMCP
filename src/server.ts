@@ -614,7 +614,7 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
   const redFlags = Array.isArray(input.redFlags) ? input.redFlags : [];
   const urlSignals = Array.isArray(input.urlSignals) ? input.urlSignals : [];
   const conflicts = Array.isArray(input.conflicts) ? input.conflicts : [];
-  const evidenceCount = typeof input.evidenceCount === "number" ? input.evidenceCount : 0;
+  const evidenceCount = Math.max(0, typeof input.evidenceCount === "number" ? input.evidenceCount : 0);
 
   const factors: RiskFactor[] = [];
 

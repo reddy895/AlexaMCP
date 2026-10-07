@@ -74,6 +74,11 @@ async function runContradictionTests() {
   assert("Job scam verdict is not LIKELY SAFE", scamData.verdict !== "LIKELY SAFE");
 
   // B4: generate_investigation_report pulls redFlags directly
+  // Argument interception unit tests
+  console.log("\n[Subject Sanitization] sanitizeSubject testing:");
+  assert("sanitizeSubject truncates long inputs", sanitizeSubject("a".repeat(200)).length === 120);
+  assert("sanitizeSubject falls back for empty input", sanitizeSubject("") === "Suspicious Message");
+
   console.log("\n[B4] generate_investigation_report signal plumbing:");
   const reportRes = await client.callTool({
     name: "generate_investigation_report",

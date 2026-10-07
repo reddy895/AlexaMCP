@@ -31,6 +31,7 @@ async function runContradictionTests() {
   console.log("\n[B3] Benign input calculation:");
   const fBenign = calculateRiskFloor(0, [], [], []);
   assert("Benign input produces score 0", fBenign === 0);
+  assert("Benign input has no active red flags", calculateRiskFloor(0, [], [], []) < 25);
 
   // safeJson unit tests
   console.log("\n[safeJson] JSON parsing resilience:");

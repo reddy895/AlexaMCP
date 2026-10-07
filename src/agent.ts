@@ -191,6 +191,10 @@ export function printReport(r: any): void {
   }
 }
 
+export function isVoiceModeEnabled(): boolean {
+  return DD_MODE === "voice";
+}
+
 export function resolveWhisperModel(): string {
   if (process.env.WHISPER_MODEL && existsSync(process.env.WHISPER_MODEL)) return process.env.WHISPER_MODEL;
   const candidates = [

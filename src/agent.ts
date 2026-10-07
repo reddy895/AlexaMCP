@@ -166,6 +166,10 @@ export function printReport(r: any): void {
   }
 
   console.log(`\n${colors.boldCyan("==============================================================")}\n`);
+
+  if (DD_MODE === "voice") {
+    speak(`${r?.verdict ?? "UNKNOWN"}. Risk score ${r?.riskScore ?? 0} out of 100. ${r?.recommendation ?? ""}`);
+  }
 }
 
 export function recordVoice(seconds: number): string {

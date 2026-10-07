@@ -168,6 +168,21 @@ export function printReport(r: any): void {
   console.log(`\n${colors.boldCyan("==============================================================")}\n`);
 }
 
+export function recordVoice(seconds: number): string {
+  try {
+    execSync("which arecord", { stdio: "ignore" });
+  } catch {
+    throw new Error("arecord is missing. Please install alsa-utils (e.g. sudo apt install alsa-utils).");
+  }
+  const wavPath = "/tmp/dd-input.wav";
+  try {
+    execSync(`arecord -d ${seconds} -f cd -t wav -q ${wavPath}`, { stdio: "inherit" });
+  } catch (err: any) {
+    throw new Error(`Failed to record audio with arecord: ${err?.message ?? String(err)}`);
+  }
+  return wavPath;
+}
+
 export function extractUrls(text: string): string[] {
   const re = /https?:\/\/[^\s<>"')\]]+/g;
   return Array.from(new Set(text.match(re) ?? []));

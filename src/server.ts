@@ -610,7 +610,7 @@ export type CalculateRiskInput = {
  */
 export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult {
 
-  const claims = Array.isArray(input.claims) ? input.claims : [];
+  const claims = Array.isArray(input.claims) ? input.claims.filter(Boolean) : [];
   const redFlags = Array.isArray(input.redFlags) ? input.redFlags : [];
   const urlSignals = Array.isArray(input.urlSignals) ? input.urlSignals : [];
   const conflicts = Array.isArray(input.conflicts) ? input.conflicts : [];

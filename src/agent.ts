@@ -351,7 +351,7 @@ export async function runInvestigation(
 
       // Optionally print model commentary below the authoritative report
       if (message.content && message.content.trim()) {
-        console.log(colors.dim("  Model commentary (non-authoritative):"));
+        console.log(colors.dim("  ── Model commentary (non-authoritative) ──"));
         console.log(colors.dim(`  ${message.content.trim().slice(0, 500)}`));
       }
       return;

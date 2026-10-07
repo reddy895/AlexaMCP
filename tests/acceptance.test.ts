@@ -185,8 +185,9 @@ async function runTests() {
     console.log = origLog;
   }
   const cleanOutput = stripAnsi(printedOutput);
-  assert("Report contains VERDICT", cleanOutput.includes("VERDICT: HIGH RISK"));
-  assert("Report contains RISK SCORE", cleanOutput.includes("RISK SCORE: 90/100"));
+  assert("Report contains authoritative banner", cleanOutput.includes("INVESTIGATION REPORT  (authoritative)"));
+  assert("Report contains VERDICT", cleanOutput.includes("VERDICT:      HIGH RISK"));
+  assert("Report contains RISK SCORE", cleanOutput.includes("RISK SCORE:   90/100"));
   assert("Report contains RED FLAGS", cleanOutput.includes("RED FLAGS:"));
   assert("Report contains RECOMMENDATION", cleanOutput.includes("RECOMMENDATION:"));
 

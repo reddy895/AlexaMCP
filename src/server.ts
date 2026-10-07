@@ -608,6 +608,14 @@ export type CalculateRiskInput = {
  * - score >= 35 => "SUSPICIOUS"
  * - otherwise   => "LIKELY SAFE"
  */
+export function calculateRiskFloor(rawScore: number, redFlags: string[] = [], claims: any[] = [], urlSignals: string[] = []): number {
+  let score = rawScore;
+  if (redFlags.length > 0 && score < 25) score = 25;
+  if (claims.some((c: any) => c?.importance === "high") && score < 30) score = 30;
+  if (urlSignals.length > 0 && redFlags.length > 0 && score < 40) score = 40;
+  return Math.min(100, Math.max(0, score));
+}
+
 export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult {
 
   const claims = Array.isArray(input.claims) ? input.claims.filter(Boolean) : [];

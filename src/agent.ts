@@ -229,6 +229,7 @@ export function recordVoice(seconds: number): string {
   } catch {
     throw new Error("arecord is missing. Please install alsa-utils (e.g. sudo apt install alsa-utils).");
   }
+  console.log(colors.cyan(`🎙 Listening for ${seconds}s... (speak into your microphone now)`));
   const wavPath = "/tmp/dd-input.wav";
   try {
     execSync(`arecord -d ${seconds} -f cd -t wav -q ${wavPath}`, { stdio: "inherit" });

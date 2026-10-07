@@ -307,7 +307,7 @@ export async function runInvestigation(
   userInput: string
 ): Promise<void> {
   let lastReport: any = null;
-  let reportGenerated = false;
+  let reportGenerated = false; // Reset per run
   const seenCalls = new Set<string>();
 
   // Cached intermediate tool results for plumbing into the report

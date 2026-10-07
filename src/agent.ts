@@ -121,7 +121,44 @@ export async function mcpToolsToOllama(client: Client): Promise<OllamaTool[]> {
   }));
 }
 
-// SECTION D — Investigation loop (CRITICAL)
+// SECTION D — Investigation reporting helper
+export function printReport(r: any): void {
+  console.log(`\n${colors.boldCyan("==================== INVESTIGATION REPORT ====================")}\n`);
+  console.log(`${colors.bold("VERDICT:")} ${r?.verdict ?? "UNKNOWN"}`);
+  console.log(`${colors.bold("RISK SCORE:")} ${r?.riskScore ?? 0}/100`);
+
+  if (Array.isArray(r?.redFlags) && r.redFlags.length > 0) {
+    console.log(`\n${colors.bold("RED FLAGS:")}`);
+    for (const flag of r.redFlags) {
+      console.log(`  • ${flag}`);
+    }
+  }
+
+  if (Array.isArray(r?.urlSignals) && r.urlSignals.length > 0) {
+    console.log(`\n${colors.bold("URL SIGNALS:")}`);
+    for (const signal of r.urlSignals) {
+      console.log(`  • ${signal}`);
+    }
+  }
+
+  if (Array.isArray(r?.evidence) && r.evidence.length > 0) {
+    console.log(`\n${colors.bold("EVIDENCE:")}`);
+    for (const item of r.evidence) {
+      const title = item?.title ?? "Evidence";
+      const url = item?.url ? ` — ${item.url}` : "";
+      console.log(`  • ${title}${url}`);
+    }
+  }
+
+  if (r?.recommendation) {
+    console.log(`\n${colors.bold("RECOMMENDATION:")}`);
+    console.log(`  ${r.recommendation}`);
+  }
+
+  console.log(`\n${colors.boldCyan("==============================================================")}\n`);
+}
+
+// SECTION E — Investigation loop (CRITICAL)
 export async function runInvestigation(
   client: Client,
   ollamaTools: OllamaTool[],

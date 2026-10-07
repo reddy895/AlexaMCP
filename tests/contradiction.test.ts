@@ -26,6 +26,8 @@ async function runContradictionTests() {
   assert("Score floored at 25 for red flag", f1 === 25);
   assert("Score floor is greater than zero for any red flag", f1 > 0);
   const f2 = calculateRiskFloor(0, [], [{ importance: "high" }], []);
+  const f2WithExisting = calculateRiskFloor(15, [], [{ importance: "high" }], []);
+  assert("Rule 2 lifts existing 15 to 30", f2WithExisting === 30);
   assert("Score floored at 30 for high importance claim", f2 === 30);
   const f3 = calculateRiskFloor(0, ["Red flag"], [], ["URL signal"]);
   assert("Score floored at 40 for concurrent URL and red flag", f3 === 40);

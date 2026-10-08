@@ -322,9 +322,9 @@ export async function runInvestigation(
   let claimsResult: any = null;
   let analysisResult: any = null;
   const urlFindings: any[] = [];
-  let evidenceResults: any[] = [];
+  const evidenceResults: any[] = [];
   let crossRefResult: any = null;
-  let riskResult: any = null; // Cache cleared per investigation
+  let riskResult: any = null;
 
   const messages: OllamaMsg[] = [
     { role: "system", content: SYSTEM_PROMPT.trim() },
@@ -407,15 +407,13 @@ export async function runInvestigation(
       // Intercept generate_investigation_report: overwrite args with cached real data
       if (name === "generate_investigation_report") {
         args = {
-          subject: args.subject ?? (userInput.trim() ? userInput.slice(0, 120) : "Suspicious Content"),
-          claims: claimsResult?.claims ?? args.claims ?? [],
-          analysis: analysisResult ?? args.analysis ?? {},
-          urlFindings: urlFindings.length ? urlFindings : (args.urlFindings ?? []),
-          evidence: evidenceResults.filter(Boolean).flatMap((e: any) => e?.results ?? []).length
-            ? evidenceResults.flatMap((e: any) => e?.results ?? [])
-            : (args.evidence ?? []),
-          crossRef: crossRefResult ?? args.crossRef ?? {},
-          risk: riskResult ?? args.risk ?? {},
+          subject: args.subject ?? userInput.slice(0, 120),
+          claims: claimsResult?.claims ?? [],
+          analysis: analysisResult ?? {},
+          urlFindings,
+          evidence: evidenceResults.flatMap(e => e?.results ?? []),
+          crossRef: crossRefResult ?? {},
+          risk: riskResult ?? {},
         };
       }
 

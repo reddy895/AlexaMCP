@@ -382,10 +382,10 @@ export async function runInvestigation(
           tool_name: name,
           content: JSON.stringify({
             error: "duplicate_call",
-            hint: "You already called this tool with these exact arguments. Use different arguments, or proceed to the next pipeline step.",
-          }),
+            hint: "You already called this tool with these exact arguments. Use different arguments, or proceed to the next pipeline step."
+          })
         });
-        console.log(`  ${colors.yellow(`⏭  skipped duplicate ${name}`)}`);
+        console.log(`  ⏭  skipped duplicate ${name}`);
         continue;
       }
       seenCalls.add(key);

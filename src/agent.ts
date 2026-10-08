@@ -75,18 +75,14 @@ Rules:
 - Never call the same tool twice with identical arguments. If a tool returns an error or empty result, change your arguments or move to the next pipeline step.
 
 CRITICAL RULES FOR THE FINAL ANSWER:
-- You must call generate_investigation_report before you give any
-  final answer to the user.
-- Your final answer MUST be a plain-language restatement of the
-  fields returned by generate_investigation_report: verdict,
+- You must call generate_investigation_report before giving a final
+  answer.
+- Your final answer MUST restate the report fields: verdict,
   riskScore, redFlags, evidence, recommendation.
-- If the report says VERDICT: LIKELY SAFE, you MUST NOT say it is a
-  scam. If the report says HIGH RISK, you MUST NOT say it is safe.
-- Do NOT add your own opinion. Do NOT contradict the report. Do NOT
-  guess. If the report says risk score is low and red flags are
-  empty, your answer must reflect that.
-- If you have not yet called generate_investigation_report, call it
-  now before answering.
+- If the report says LIKELY SAFE, you MUST NOT call it a scam.
+  If the report says HIGH RISK, you MUST NOT call it safe.
+- Do NOT add your own opinion. Do NOT guess. Do NOT contradict the
+  report.
 `;
 
 // SECTION B — Ollama call

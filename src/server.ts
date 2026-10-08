@@ -586,6 +586,8 @@ export const RISK_WEIGHTS = {
   payment_request: 25,
   sensitive_info_request: 25,
   too_good_to_be_true: 20,
+  credential_request: 30,
+  reward_request: 20,
   urgency: 10,
   unverified_company: 15,
   suspicious_url: 20,
@@ -622,7 +624,7 @@ export type CalculateRiskInput = {
  */
 export function calculateRiskFloor(rawScore: number, redFlags: string[] = [], claims: any[] = [], urlSignals: string[] = []): number {
   let score = rawScore;
-  if (redFlags.length > 0 && score < 25) score = 25;
+  if (redFlags.length > 0 && score < 40) score = 40;
   if (claims.some((c: any) => c?.importance === "high") && score < 30) score = 30;
   if (urlSignals.length > 0 && redFlags.length > 0 && score < 40) score = 40;
   return Math.min(100, Math.max(0, score));
@@ -637,6 +639,30 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
   const evidenceCount = Math.max(0, typeof input.evidenceCount === "number" ? input.evidenceCount : 0);
 
   const factors: RiskFactor[] = [];
+
+  const text = JSON.stringify(claims).toLowerCase();
+
+  const hasCredentialAsk =
+    /(pin|otp|password|cvv|acc(?:ount)?\s*(?:no|number)|card\s*number|net\s*banking|ifsc)/i.test(text) &&
+    /(provide|send|give|share|submit|enter|reply)/i.test(text);
+
+  const hasRewardAsk =
+    /(won|winner|selected|congratulations|prize|lottery)/i.test(text) &&
+    /(provide|send|give|share|submit|enter|reply)/i.test(text);
+
+  if (hasCredentialAsk) {
+    factors.push({
+      factor: "Credential harvesting or sensitive account request in claims",
+      weight: RISK_WEIGHTS.credential_request,
+    });
+  }
+
+  if (hasRewardAsk) {
+    factors.push({
+      factor: "Unsolicited reward or prize claiming directive in claims",
+      weight: RISK_WEIGHTS.reward_request,
+    });
+  }
 
   // Claim factors
   if (claims.some((c) => c?.type === "payment_request")) {
@@ -721,9 +747,11 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
   const rawScore = factors.reduce((acc, f) => acc + f.weight, 0);
   let score = Math.min(100, Math.max(0, rawScore));
 
-  if (redFlags.length > 0 && score < 25) score = 25;
+  if (redFlags.length > 0 && score < 40) score = 40;
   if (claims.some((c: any) => c?.importance === "high") && score < 30) score = 30;
   if (urlSignals.length > 0 && redFlags.length > 0 && score < 40) score = 40;
+  if (hasCredentialAsk && score < 75) score = 75;
+  if (hasRewardAsk && score < 70) score = 70;
 
   score = Math.min(100, Math.max(0, score));
 

@@ -22,7 +22,7 @@ export const MCP_URL = process.env.MCP_URL ?? "http://localhost:3001/mcp";
 export const MAX_STEPS = Number(process.env.MAX_STEPS ?? 8);
 
 // Voice config
-export const DD_MODE = process.env.DD_MODE ?? "text";
+export const DD_MODE = process.env.DD_MODE ?? "voice";
 export const RECORD_SECONDS = Number(process.env.RECORD_SECONDS ?? 6);
 
 // ANSI terminal color utilities

@@ -8,7 +8,8 @@
     "dev": "concurrently -n MCP,AGENT -c cyan,magenta \"npm run server\" \"npm run agent\"",
     "test": "tsx tests/acceptance.test.ts",
     "test:contradiction": "tsx tests/contradiction.test.ts",
-    "test:all": "tsx tests/acceptance.test.ts && tsx tests/contradiction.test.ts",
+    "test:regression": "tsx tests/regression.test.ts",
+    "test:all": "tsx tests/acceptance.test.ts && tsx tests/contradiction.test.ts && tsx tests/regression.test.ts",
     "agent:voice": "DD_MODE=voice tsx src/agent.ts",
     "agent:text": "DD_MODE=text tsx src/agent.ts"
   },

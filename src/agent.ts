@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { extractUrls } from "./util.js";
 
 // ====================================================================
 // ALEXA + MCP — DIGITAL DETECTIVE AGENT
@@ -298,10 +299,7 @@ export function sanitizeSubject(text: string): string {
   return text.trim().slice(0, 120) || "Suspicious Message";
 }
 
-export function extractUrls(text: string): string[] {
-  const re = /https?:\/\/[^\s<>"')\]]+/g;
-  return Array.from(new Set(text.match(re) ?? []));
-}
+export { extractUrls } from "./util.js";
 
 // SECTION E — Investigation loop (CRITICAL)
 
@@ -570,7 +568,7 @@ export async function main(): Promise<void> {
 
       const urls = extractUrls(line);
       const augmented = urls.length
-        ? `${line}\n\n[SYSTEM NOTE: The following URLs were found in the input and MUST be inspected with inspect_url using the exact string shown: ${urls.join(", ")}]`
+        ? `${line}\n\n[SYSTEM: URLs detected — inspect with inspect_url using these exact strings: ${urls.join(", ")}]`
         : line;
 
       try {

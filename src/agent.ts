@@ -7,6 +7,7 @@ import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { extractUrls } from "./util.js";
+import { recordVoice, transcribe, speak } from "./voice.js";
 
 // ====================================================================
 // ALEXA + MCP — DIGITAL DETECTIVE AGENT
@@ -20,11 +21,7 @@ export const MCP_URL = process.env.MCP_URL ?? "http://localhost:3001/mcp";
 export const MAX_STEPS = Number(process.env.MAX_STEPS ?? 8);
 
 // Voice config
-export const DD_MODE = process.env.DD_MODE ?? "voice"; // "text" | "voice" (voice default)
-export const WHISPER_BIN = process.env.WHISPER_BIN ?? "whisper-cli";
-export const WHISPER_MODEL = process.env.WHISPER_MODEL ?? "models/ggml-base.en.bin";
-export const PIPER_BIN = process.env.PIPER_BIN ?? "piper";
-export const PIPER_MODEL = process.env.PIPER_MODEL ?? ""; // path to .onnx
+export const DD_MODE = process.env.DD_MODE ?? "text";
 export const RECORD_SECONDS = Number(process.env.RECORD_SECONDS ?? 6);
 
 // ANSI terminal color utilities
@@ -536,29 +533,18 @@ export async function main(): Promise<void> {
 
   try {
     while (true) {
-      let line: string;
+      let line = "";
       if (DD_MODE === "voice") {
-        try {
-          const wav = recordVoice(RECORD_SECONDS);
-          line = transcribe(wav).trim();
-        } catch (err: any) {
-          console.error(colors.red(err?.message ?? String(err)));
-          continue;
-        }
-        console.log(`detective› ${line}`);
+        const wav = recordVoice(Number(process.env.RECORD_SECONDS ?? 6));
+        if (wav) line = transcribe(wav).trim();
         if (!line) {
-          console.log("(heard nothing)");
-          continue;
+          line = (await rl.question("detective (text fallback)› ")).trim();
+        } else {
+          console.log(`detective› ${line}`);
         }
       } else {
-        try {
-          line = (await rl.question("detective› ")).trim();
-        } catch {
-          // stdin stream closed (EOF)
-          break;
-        }
+        line = (await rl.question("detective› ")).trim();
       }
-
       if (!line) continue;
       if (["exit", "quit", ":q"].includes(line.toLowerCase())) break;
 

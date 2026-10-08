@@ -336,31 +336,23 @@ export async function runInvestigation(
 
     // FINAL ANSWER PATH
     if (!message.tool_calls || message.tool_calls.length === 0) {
-      // If the report tool was never called, force the model to call it
       if (!reportGenerated) {
-        messages.push({
-          role: "assistant",
-          content: message.content ?? "",
-        });
+        // Force the report call
         messages.push({
           role: "tool",
           tool_name: "generate_investigation_report",
           content: JSON.stringify({
             error: "report_missing",
-            hint: "You must call generate_investigation_report before answering. Call it now with the data from previous tool calls.",
-          }),
+            hint: "You MUST call generate_investigation_report before answering."
+          })
         });
-        console.log(colors.yellow("  ⚠ Model tried to answer without generating report — pushing back"));
         continue;
       }
-
-      // Report was generated — always print the structured report
+      // Print structured report — never the model's prose as the verdict
       printReport(lastReport);
-
-      // Optionally print model commentary below the authoritative report
-      if (message.content && message.content.trim()) {
-        console.log(colors.dim("  ── Model commentary (non-authoritative) ──"));
-        console.log(colors.dim(`  ${message.content.trim().slice(0, 500)}\n`));
+      if ((message.content ?? "").trim()) {
+        console.log("\nModel commentary (non-authoritative):");
+        console.log((message.content ?? "").trim());
       }
       return;
     }
@@ -455,12 +447,8 @@ export async function runInvestigation(
       if (name === "calculate_risk") riskResult = safeJson(text);
 
       if (name === "generate_investigation_report") {
-        try {
-          lastReport = JSON.parse(text);
-          reportGenerated = true;
-        } catch {
-          // ignore silently
-        }
+        lastReport = safeJson(text);
+        reportGenerated = true;
       }
 
       // Push the tool result back to the LLM
@@ -472,12 +460,9 @@ export async function runInvestigation(
     }
   }
 
-  console.log(colors.yellow("\n⚠ Max steps reached — printing best-available report:"));
-  if (lastReport) {
-    printReport(lastReport);
-  } else {
-    console.log("(no report was generated)");
-  }
+  console.log("\n⚠ Max steps reached — printing best-available report:");
+  if (lastReport) printReport(lastReport);
+  else console.log("(no report was generated)");
 }
 
 // ====================================================================

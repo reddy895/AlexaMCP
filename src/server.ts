@@ -709,20 +709,9 @@ export function calculateRisk(input: CalculateRiskInput): RiskCalculationResult 
   const rawScore = factors.reduce((acc, f) => acc + f.weight, 0);
   let score = Math.min(100, Math.max(0, rawScore));
 
-  // Rule 1 (Fix C): if there are red flags, floor the score at 25.
-  if (redFlags.length > 0 && score < 25) {
-    score = 25;
-  }
-
-  // Rule 2: if any high-importance claim exists, floor at 30.
-  if (claims.some((c: any) => c?.importance === "high") && score < 30) {
-    score = 30;
-  }
-
-  // Rule 3: if the message contains a URL AND red flags, floor at 40.
-  if (urlSignals.length > 0 && redFlags.length > 0 && score < 40) {
-    score = 40;
-  }
+  if (redFlags.length > 0 && score < 25) score = 25;
+  if (claims.some((c: any) => c?.importance === "high") && score < 30) score = 30;
+  if (urlSignals.length > 0 && redFlags.length > 0 && score < 40) score = 40;
 
   score = Math.min(100, Math.max(0, score));
 

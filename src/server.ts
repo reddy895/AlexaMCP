@@ -148,10 +148,22 @@ export function extractClaims(text: string): Claim[] {
     .filter((s) => s.length > 0);
 
   const claims: Claim[] = [];
-  const RE_MONEY = /[₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)\b/i;
+
+  const RE_REWARD = /(won|winner|selected|congratulations|prize|lottery)/i;
+  const RE_REQUEST = /(provide|send|give|share|submit|enter|fill|reply)/i;
+
+  if (RE_REWARD.test(text) && RE_REQUEST.test(text)) {
+    claims.push({
+      claim: text.trim(),
+      type: "sensitive_info_request",
+      importance: "high",
+    });
+  }
+
+  const piiRe = /(aadhaar|pan\b|passport|otp|password|bank|credit\s*card|debit\s*card|cvv|ssn|kyc|acc(?:ount)?\s*(?:no|number|#)|account\s*number|pin\b|atm\s*pin|upi\s*pin|net\s*banking|card\s*number|routing\s*number|ifsc)/i;
+  const tooGoodRe = /(you\s+(?:have\s+)?won|winner|congratulations|selected|guarantee|100%|risk.?free|no\s+experience|without\s+interview|instant\s+approval|\b\d{4,}\b\s*(?:rupees|rs|inr|usd|dollars)?|earn\s+\d+|win\s+\d+)/i;
+  const moneyRe = /([₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)|\b\d{4,}\b)/i;
   const RE_PAYMENT = /\b(pay|fee|deposit|transfer|registration fee|processing fee|refundable)\b/i;
-  const RE_SENSITIVE = /\b(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)\b/i;
-  const RE_TOO_GOOD = /(guarantee|100%|risk.?free|no experience|without interview|instant approval)/i;
   const RE_LINKS = /(click|visit|https?:\/\/|www\.)/i;
   const RE_URGENCY = /\b(urgent|immediately|within \d+ (hours|minutes|days)|act now)\b/i;
 
@@ -165,7 +177,7 @@ export function extractClaims(text: string): Claim[] {
       continue;
     }
 
-    if (RE_SENSITIVE.test(sentence)) {
+    if (piiRe.test(sentence)) {
       claims.push({
         claim: sentence,
         type: "sensitive_info_request",
@@ -174,7 +186,7 @@ export function extractClaims(text: string): Claim[] {
       continue;
     }
 
-    if (RE_TOO_GOOD.test(sentence)) {
+    if (tooGoodRe.test(sentence)) {
       claims.push({
         claim: sentence,
         type: "too_good_to_be_true",
@@ -183,7 +195,7 @@ export function extractClaims(text: string): Claim[] {
       continue;
     }
 
-    if (RE_MONEY.test(sentence)) {
+    if (moneyRe.test(sentence)) {
       claims.push({
         claim: sentence,
         type: "financial",

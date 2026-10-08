@@ -2,64 +2,126 @@ import { execSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import process from "node:process";
 
-export const WHISPER_BIN = process.env.WHISPER_BIN ?? "";
-export const WHISPER_MODEL = process.env.WHISPER_MODEL ?? "";
-export const PIPER_BIN = process.env.PIPER_BIN ?? "piper";
-export const PIPER_MODEL = process.env.PIPER_MODEL ?? "";
+export interface VoiceDepsReport {
+  arecord: boolean;
+  whisper: boolean;
+  espeak: boolean;
+  piper: boolean;
+}
 
-export function recordVoice(seconds: number): string | null {
-  const wavPath = "/tmp/dd-input.wav";
+export function hasCommand(bin: string): boolean {
+  if (!bin) return false;
   try {
-    execSync(`arecord -d ${seconds} -f cd -t wav -q ${wavPath}`, { stdio: "ignore" });
-    return wavPath;
-  } catch (err: any) {
-    const reason = err?.message ?? String(err);
-    console.log(`⚠ Microphone unavailable (${reason}). Falling back to text.`);
-    return null;
+    execSync(`which ${bin}`, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
   }
 }
 
-export function transcribe(wavPath: string): string {
-  try {
-    const whisperBin = process.env.WHISPER_BIN ?? "";
-    const whisperModel = process.env.WHISPER_MODEL ?? "";
-    if (!whisperBin || !existsSync(whisperBin)) {
-      return "";
+export function checkVoiceDeps(): VoiceDepsReport {
+  const whisperBin = process.env.WHISPER_BIN ?? "whisper-cli";
+  const piperBin = process.env.PIPER_BIN ?? "piper";
+  const piperModel = process.env.PIPER_MODEL ?? "";
+
+  const report: VoiceDepsReport = {
+    arecord: hasCommand("arecord"),
+    whisper: hasCommand(whisperBin) || existsSync(whisperBin),
+    espeak: hasCommand("espeak-ng"),
+    piper: hasCommand(piperBin) || (piperModel.trim() !== "" && existsSync(piperModel)),
+  };
+
+  if (!report.arecord) console.log("  ✗ arecord missing (install alsa-utils)");
+  if (!report.whisper) console.log("  ✗ whisper-cli missing");
+  if (!report.espeak) console.log("  ✗ espeak-ng missing");
+  if (!report.piper) console.log("  ✗ piper missing (optional)");
+
+  return report;
+}
+
+export function recordVoice(seconds: number): string | null {
+  const wavPath = "/tmp/dd-input.wav";
+  const devices = ["default", "plughw:1,0", "plughw:0,0"];
+
+  for (const dev of devices) {
+    try {
+      execSync(`arecord -D ${dev} -d ${seconds} -f cd -t wav -q ${wavPath}`, {
+        stdio: ["ignore", "ignore", "pipe"],
+      });
+      return wavPath;
+    } catch (err: any) {
+      const stderr = err?.stderr ? err.stderr.toString().trim() : (err?.message ?? String(err));
+      console.log(`⚠ arecord (-D ${dev}) failed: ${stderr}`);
     }
-    execSync(`${whisperBin} -m ${whisperModel} -f ${wavPath} -nt -otxt -of /tmp/dd-out`, { stdio: "ignore" });
-    const outPath = "/tmp/dd-out.txt";
+  }
+
+  console.log("⚠ Microphone unavailable on all devices. Falling back to text.");
+  return null;
+}
+
+export function transcribe(wavPath: string): string {
+  const whisperBin = process.env.WHISPER_BIN ?? "whisper-cli";
+  const whisperModel = process.env.WHISPER_MODEL ?? "models/ggml-base.en.bin";
+
+  if (!whisperBin || (!hasCommand(whisperBin) && !existsSync(whisperBin))) {
+    return "";
+  }
+
+  const outPath = "/tmp/dd-out.txt";
+  try {
+    const rawStdout = execSync(`${whisperBin} -m "${whisperModel}" -f "${wavPath}" -nt -otxt -of /tmp/dd-out`, {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
     if (existsSync(outPath)) {
       const text = readFileSync(outPath, "utf-8").trim();
       return text;
     }
+
+    if (rawStdout && typeof rawStdout === "string" && rawStdout.trim()) {
+      return rawStdout.trim();
+    }
     return "";
-  } catch {
+  } catch (err: any) {
+    const stderr = err?.stderr ? err.stderr.toString().trim() : (err?.message ?? String(err));
+    console.log(`⚠ whisper-cli transcription failed: ${stderr}`);
     return "";
   }
 }
 
+let ttsDisabled = false;
+
 export function speak(text: string): void {
-  try {
-    const trimmed = text.slice(0, 600).replace(/"/g, '\\"');
-    const piperModel = process.env.PIPER_MODEL ?? "";
-    const piperBin = process.env.PIPER_BIN ?? "piper";
+  if (ttsDisabled) return;
 
-    if (piperModel.trim() !== "") {
-      try {
-        execSync(`echo "${trimmed}" | ${piperBin} --model "${piperModel}" --output_file /tmp/dd-out.wav`, { stdio: "ignore" });
-        execSync("aplay -q /tmp/dd-out.wav", { stdio: "ignore" });
-        return;
-      } catch {
-        // Fall back if piper/aplay fails
-      }
-    }
+  const trimmed = text.slice(0, 600).replace(/"/g, '\\"');
+  const piperModel = process.env.PIPER_MODEL ?? "";
+  const piperBin = process.env.PIPER_BIN ?? "piper";
 
+  if (piperModel.trim() !== "" && (hasCommand(piperBin) || existsSync(piperBin))) {
     try {
-      execSync(`espeak-ng -s 160 -v en-us "${trimmed}"`, { stdio: "ignore" });
-    } catch {
-      console.log("⚠ Text-to-speech unavailable.");
+      execSync(`echo "${trimmed}" | ${piperBin} --model "${piperModel}" --output_file /tmp/dd-out.wav`, {
+        stdio: ["ignore", "ignore", "pipe"],
+      });
+      execSync("aplay -q /tmp/dd-out.wav", { stdio: ["ignore", "ignore", "pipe"] });
+      return;
+    } catch (err: any) {
+      const stderr = err?.stderr ? err.stderr.toString().trim() : (err?.message ?? String(err));
+      console.log(`⚠ piper TTS failed: ${stderr}`);
     }
-  } catch {
-    // Never throw
   }
+
+  if (hasCommand("espeak-ng")) {
+    try {
+      execSync(`espeak-ng -s 160 -v en-us "${trimmed}"`, { stdio: ["ignore", "ignore", "pipe"] });
+      return;
+    } catch (err: any) {
+      const stderr = err?.stderr ? err.stderr.toString().trim() : (err?.message ?? String(err));
+      console.log(`⚠ espeak-ng TTS failed: ${stderr}`);
+    }
+  }
+
+  console.log("⚠ Text-to-speech unavailable (both piper and espeak-ng failed or missing).");
+  ttsDisabled = true;
 }

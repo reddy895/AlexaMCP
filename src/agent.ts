@@ -7,8 +7,8 @@ import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { extractUrls } from "./util.js";
-import { recordVoice, transcribe, speak } from "./voice.js";
-export { recordVoice, transcribe, speak } from "./voice.js";
+import { recordVoice, transcribe, speak, checkVoiceDeps } from "./voice.js";
+export { recordVoice, transcribe, speak, checkVoiceDeps } from "./voice.js";
 
 // ====================================================================
 // ALEXA + MCP — DIGITAL DETECTIVE AGENT
@@ -430,9 +430,22 @@ export async function main(): Promise<void> {
   }
 
   // 5. Interactive readline loop
-  if (DD_MODE === "voice") {
-    console.log(`🎤 Voice mode — will record ${RECORD_SECONDS}s after each prompt.`);
-    speak("Digital Detective online. Listening for suspicious messages.");
+  let activeMode = DD_MODE;
+
+  if (activeMode === "voice") {
+    console.log("🎤 Voice dependencies:");
+    const deps = checkVoiceDeps();
+    console.log(`  arecord:     ${deps.arecord ? "✓" : "✗"}`);
+    console.log(`  whisper-cli: ${deps.whisper ? "✓" : "✗"}`);
+    console.log(`  espeak-ng:   ${deps.espeak ? "✓" : "✗"}`);
+    console.log(`  piper:       ${deps.piper ? "✓" : "✗ (optional)"}`);
+
+    if (!deps.arecord || !deps.whisper) {
+      console.log("⚠ Voice mode unavailable. Falling back to text. Install: sudo apt install alsa-utils");
+      activeMode = "text";
+    } else {
+      speak("Digital Detective online. Listening for suspicious messages.");
+    }
   }
 
   const rl = readline.createInterface({ input, output });
@@ -440,7 +453,7 @@ export async function main(): Promise<void> {
   try {
     while (true) {
       let line = "";
-      if (DD_MODE === "voice") {
+      if (activeMode === "voice") {
         const wav = recordVoice(Number(process.env.RECORD_SECONDS ?? 6));
         if (wav) line = transcribe(wav).trim();
         if (!line) {

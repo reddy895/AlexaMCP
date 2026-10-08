@@ -504,11 +504,7 @@ export async function main(): Promise<void> {
     }
     tagsData = await resp.json();
   } catch (err) {
-    console.error(
-      colors.red(
-        `Cannot reach Ollama at ${OLLAMA_URL}.\nPlease make sure Ollama is installed and running via "ollama serve".`
-      )
-    );
+    console.log("✗ Cannot reach Ollama. Run: ollama serve");
     process.exit(1);
   }
 
@@ -517,14 +513,10 @@ export async function main(): Promise<void> {
   );
   const modelPrefix = MODEL.includes(":") ? MODEL : `${MODEL}:`;
   const hasModel = availableModels.some(
-    (m) => m === MODEL || m.startsWith(modelPrefix) || m === `${MODEL}:latest`
+    (m) => m === MODEL || m.startsWith(MODEL) || m.startsWith(modelPrefix)
   );
   if (!hasModel) {
-    console.error(
-      colors.yellow(
-        `⚠ Model "${MODEL}" is not installed.\n  Run: ollama pull ${MODEL}\n  Then re-run the agent.`
-      )
-    );
+    console.log(`⚠ Model '${MODEL}' not installed. Run: ollama pull ${MODEL}`);
     process.exit(1);
   }
 

@@ -8,6 +8,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { extractUrls } from "./util.js";
 import { recordVoice, transcribe, speak } from "./voice.js";
+export { recordVoice, transcribe, speak } from "./voice.js";
 
 // ====================================================================
 // ALEXA + MCP — DIGITAL DETECTIVE AGENT
@@ -187,105 +188,6 @@ export function printReport(r: any): void {
 
 export function isVoiceModeEnabled(): boolean {
   return DD_MODE === "voice";
-}
-
-export function resolveWhisperModel(): string {
-  if (process.env.WHISPER_MODEL && existsSync(process.env.WHISPER_MODEL)) return process.env.WHISPER_MODEL;
-  const candidates = [
-    "./whisper.cpp/models/ggml-base.en.bin",
-    "./whisper.cpp/models/ggml-tiny.en.bin",
-    path.resolve(process.env.HOME ?? "", "whisper.cpp/models/ggml-base.en.bin"),
-    "models/ggml-base.en.bin",
-  ];
-  for (const c of candidates) {
-    if (existsSync(c)) return c;
-  }
-  return WHISPER_MODEL;
-}
-
-export function resolveWhisperBinary(): string {
-  if (process.env.WHISPER_BIN && existsSync(process.env.WHISPER_BIN)) return process.env.WHISPER_BIN;
-  const localBuild = path.resolve("./whisper.cpp/build/bin/whisper-cli");
-  if (existsSync(localBuild)) return localBuild;
-  const homeBuild = path.resolve(process.env.HOME ?? "", "whisper.cpp/build/bin/whisper-cli");
-  if (existsSync(homeBuild)) return homeBuild;
-  return WHISPER_BIN;
-}
-
-export function hasCommand(bin: string): boolean {
-  try {
-    execSync(`which ${bin}`, { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function recordVoice(seconds: number): string {
-  try {
-    execSync("which arecord", { stdio: "ignore" });
-  } catch {
-    throw new Error("arecord is missing. Please install alsa-utils (e.g. sudo apt install alsa-utils).");
-  }
-  console.log(colors.cyan(`🎙 Listening for ${seconds}s... (speak into your microphone now)`));
-  const wavPath = "/tmp/dd-input.wav";
-  const devFlag = process.env.DD_MIC_DEVICE ? `-D ${process.env.DD_MIC_DEVICE} ` : "";
-  try {
-    const rateFlag = process.env.DD_SAMPLE_RATE ? `-r ${process.env.DD_SAMPLE_RATE} ` : "";
-    execSync(`arecord ${devFlag}${rateFlag}-d ${seconds} -f cd -t wav -q ${wavPath}`, { stdio: "inherit" });
-  } catch (err: any) {
-    throw new Error(`Failed to record audio with arecord: ${err?.message ?? String(err)}`);
-  }
-  return wavPath;
-}
-
-export function transcribe(wavPath: string): string {
-  try {
-    const bin = resolveWhisperBinary();
-    const mdl = resolveWhisperModel();
-    execSync(`${bin} -m "${mdl}" -f "${wavPath}" -nt -otxt -of /tmp/dd-out`, {
-      stdio: "ignore",
-    });
-  } catch {
-    // Whisper execution failed or binary missing
-  }
-  const outPath = "/tmp/dd-out.txt";
-  try { if (existsSync(wavPath)) execSync(`rm -f ${wavPath}`, { stdio: "ignore" }); } catch {}
-  if (existsSync(outPath)) {
-    try {
-      const res = readFileSync(outPath, "utf-8").trim();
-      try { execSync(`rm -f ${outPath}`, { stdio: "ignore" }); } catch {}
-      return res;
-    } catch {
-      return "";
-    }
-  }
-  return "";
-}
-
-export function speak(text: string): void {
-  console.log(colors.dim(`🔊 [Audio Output] ${text.slice(0, 80)}...`));
-  try {
-    const trimmed = text.slice(0, 600).replace(/"/g, '\\"');
-    if (PIPER_MODEL && PIPER_MODEL.trim() !== "" && PIPER_BIN) {
-      try {
-        execSync(`echo "${trimmed}" | ${PIPER_BIN} --model "${PIPER_MODEL}" --output_file /tmp/dd-out.wav`, {
-          stdio: "ignore",
-        });
-        try { execSync("aplay -q /tmp/dd-out.wav", { stdio: "ignore" }); } catch {}
-        return;
-      } catch {
-        // Fall back to espeak-ng if piper fails
-      }
-    }
-    if (hasCommand("espeak-ng")) {
-      execSync(`espeak-ng -s 160 -v en-us "${trimmed}"`, { stdio: "ignore" });
-    } else if (hasCommand("spd-say")) {
-      execSync(`spd-say "${trimmed}"`, { stdio: "ignore" });
-    }
-  } catch {
-    // Swallow errors (audio must never crash the agent)
-  }
 }
 
 export function sanitizeSubject(text: string): string {
@@ -490,7 +392,7 @@ export async function main(): Promise<void> {
     (m) => m === MODEL || m.startsWith(MODEL) || m.startsWith(modelPrefix)
   );
   if (!hasModel) {
-    console.log(`⚠ Model '${MODEL}' not installed. Run: ollama pull ${MODEL}`);
+    console.log(`⚠ Model "${MODEL}" is not installed. Run: ollama pull ${MODEL}`);
     process.exit(1);
   }
 

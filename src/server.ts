@@ -149,11 +149,11 @@ export function extractClaims(text: string): Claim[] {
 
   const claims: Claim[] = [];
   const RE_MONEY = /[₹$€£]\s?\d|\b\d+\s*(lakh|crore|k|million|lpa)\b/i;
-  const RE_PAYMENT = /(pay|fee|deposit|transfer|registration fee|processing fee|refundable)/i;
-  const RE_SENSITIVE = /(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)/i;
+  const RE_PAYMENT = /\b(pay|fee|deposit|transfer|registration fee|processing fee|refundable)\b/i;
+  const RE_SENSITIVE = /\b(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)\b/i;
   const RE_TOO_GOOD = /(guarantee|100%|risk.?free|no experience|without interview|instant approval)/i;
   const RE_LINKS = /(click|visit|https?:\/\/|www\.)/i;
-  const RE_URGENCY = /(urgent|immediately|within \d+ (hours|minutes|days)|act now)/i;
+  const RE_URGENCY = /\b(urgent|immediately|within \d+ (hours|minutes|days)|act now)\b/i;
 
   for (const sentence of rawSentences) {
     if (RE_PAYMENT.test(sentence)) {
@@ -284,7 +284,7 @@ export function analyzeMessage(text: string): MessageAnalysis {
   }
 
   // Red flag: Requests sensitive personal / financial data
-  if (/(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)/i.test(content)) {
+  if (/\b(aadhaar|pan|passport|otp|password|bank|credit card|cvv|ssn|kyc)\b/i.test(content)) {
     redFlags.push("Requests sensitive personal, identity, banking, or authentication data");
   }
 

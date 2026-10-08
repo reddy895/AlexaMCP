@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
+import path from "node:path";
 import process from "node:process";
 
 export interface VoiceDepsReport {
@@ -19,21 +20,50 @@ export function hasCommand(bin: string): boolean {
   }
 }
 
+export function resolveWhisperBinary(): string {
+  const envBin = process.env.WHISPER_BIN ?? "";
+  if (envBin && (hasCommand(envBin) || existsSync(envBin))) return envBin;
+  if (hasCommand("whisper-cli")) return "whisper-cli";
+  const candidates = [
+    path.resolve(process.cwd(), "whisper.cpp/build/bin/whisper-cli"),
+    path.resolve(process.env.HOME ?? "", "whisper.cpp/build/bin/whisper-cli"),
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  return "";
+}
+
+export function resolveWhisperModel(): string {
+  const envModel = process.env.WHISPER_MODEL ?? "";
+  if (envModel && existsSync(envModel)) return envModel;
+  const candidates = [
+    path.resolve(process.cwd(), "whisper.cpp/models/ggml-base.en.bin"),
+    path.resolve(process.cwd(), "whisper.cpp/models/ggml-tiny.en.bin"),
+    path.resolve(process.env.HOME ?? "", "whisper.cpp/models/ggml-base.en.bin"),
+    "models/ggml-base.en.bin",
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  return "";
+}
+
 export function checkVoiceDeps(): VoiceDepsReport {
-  const whisperBin = process.env.WHISPER_BIN ?? "whisper-cli";
+  const whisperBin = resolveWhisperBinary();
   const piperBin = process.env.PIPER_BIN ?? "piper";
   const piperModel = process.env.PIPER_MODEL ?? "";
 
   const report: VoiceDepsReport = {
     arecord: hasCommand("arecord"),
-    whisper: hasCommand(whisperBin) || existsSync(whisperBin),
+    whisper: whisperBin !== "",
     espeak: hasCommand("espeak-ng"),
     piper: hasCommand(piperBin) || (piperModel.trim() !== "" && existsSync(piperModel)),
   };
 
   if (!report.arecord) console.log("  ✗ arecord missing (install alsa-utils)");
   if (!report.whisper) console.log("  ✗ whisper-cli missing");
-  if (!report.espeak) console.log("  ✗ espeak-ng missing");
+  if (!report.espeak) console.log("  ✗ espeak-ng missing (optional)");
   if (!report.piper) console.log("  ✗ piper missing (optional)");
 
   return report;
@@ -60,16 +90,16 @@ export function recordVoice(seconds: number): string | null {
 }
 
 export function transcribe(wavPath: string): string {
-  const whisperBin = process.env.WHISPER_BIN ?? "whisper-cli";
-  const whisperModel = process.env.WHISPER_MODEL ?? "models/ggml-base.en.bin";
+  const whisperBin = resolveWhisperBinary();
+  const whisperModel = resolveWhisperModel();
 
-  if (!whisperBin || (!hasCommand(whisperBin) && !existsSync(whisperBin))) {
+  if (!whisperBin) {
     return "";
   }
 
   const outPath = "/tmp/dd-out.txt";
   try {
-    const rawStdout = execSync(`${whisperBin} -m "${whisperModel}" -f "${wavPath}" -nt -otxt -of /tmp/dd-out`, {
+    const rawStdout = execSync(`"${whisperBin}" -m "${whisperModel}" -f "${wavPath}" -nt -otxt -of /tmp/dd-out`, {
       encoding: "utf-8",
       stdio: ["ignore", "pipe", "pipe"],
     });

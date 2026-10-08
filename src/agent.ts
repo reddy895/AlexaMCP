@@ -270,6 +270,35 @@ export async function runInvestigation(
       }
       args = args ?? {};
 
+      if (name === "cross_reference") {
+        args = {
+          claims: claimsResult?.claims ?? [],
+          evidence: evidenceResults.flatMap((e: any) => e?.results ?? []),
+        };
+      }
+
+      if (name === "calculate_risk") {
+        args = {
+          claims: claimsResult?.claims ?? [],
+          redFlags: analysisResult?.redFlags ?? [],
+          urlSignals: urlFindings.flatMap((u: any) => u?.signals ?? []),
+          conflicts: crossRefResult?.conflicts ?? [],
+          evidenceCount: evidenceResults.flatMap((e: any) => e?.results ?? []).length,
+        };
+      }
+
+      if (name === "generate_investigation_report") {
+        args = {
+          subject: args.subject ?? userInput.slice(0, 120),
+          claims: claimsResult?.claims ?? [],
+          analysis: analysisResult ?? {},
+          urlFindings,
+          evidence: evidenceResults.flatMap((e: any) => e?.results ?? []),
+          crossRef: crossRefResult ?? {},
+          risk: riskResult ?? {},
+        };
+      }
+
       const key = name + "|" + JSON.stringify(args);
       if (seenCalls.has(key)) {
         messages.push({
@@ -284,31 +313,6 @@ export async function runInvestigation(
         continue;
       }
       seenCalls.add(key);
-
-      // Intercept calculate_risk: populate real cached signals
-      if (name === "calculate_risk") {
-        const cachedEvidenceCount = evidenceResults.filter(Boolean).flatMap((e: any) => e?.results ?? []).length;
-        args = {
-          claims: claimsResult?.claims ?? args.claims ?? [],
-          redFlags: analysisResult?.redFlags ?? args.redFlags ?? [],
-          urlSignals: urlFindings.length ? urlFindings.flatMap((u: any) => (u?.signals ?? []).map((s: string) => `${u.url}: ${s}`)) : (args.urlSignals ?? []),
-          conflicts: crossRefResult?.conflicts ?? args.conflicts ?? [],
-          evidenceCount: cachedEvidenceCount || (typeof args.evidenceCount === "number" ? args.evidenceCount : 0),
-        };
-      }
-
-      // Intercept generate_investigation_report: overwrite args with cached real data
-      if (name === "generate_investigation_report") {
-        args = {
-          subject: args.subject ?? userInput.slice(0, 120),
-          claims: claimsResult?.claims ?? [],
-          analysis: analysisResult ?? {},
-          urlFindings,
-          evidence: evidenceResults.flatMap(e => e?.results ?? []),
-          crossRef: crossRefResult ?? {},
-          risk: riskResult ?? {},
-        };
-      }
 
       const argsPreview = JSON.stringify(args).slice(0, 100);
       console.log(`${colors.magenta(`▶ ${name}`)} ${colors.dim(argsPreview)}`);

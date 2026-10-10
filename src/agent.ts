@@ -9,6 +9,12 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { extractUrls } from "./util.js";
 import { recordVoice, transcribe, speak, checkVoiceDeps } from "./voice.js";
 export { recordVoice, transcribe, speak, checkVoiceDeps } from "./voice.js";
+import { formatSpokenBriefing } from "./dialogue/spokenBriefing.js";
+import { classifyVoiceIntent } from "./dialogue/intentClassifier.js";
+import { handleVoiceCommand } from "./dialogue/voiceCommands.js";
+import { handleSmalltalk } from "./dialogue/smalltalk.js";
+import { defaultEarcons } from "./audio/earcons.js";
+import { defaultAudioPlayer } from "./audio/player.js";
 
 // ====================================================================
 // ALEXA + MCP — DIGITAL DETECTIVE AGENT
@@ -182,7 +188,8 @@ export function printReport(r: any): void {
   console.log("═".repeat(60) + "\n");
 
   if (DD_MODE === "voice") {
-    speak(`${r?.verdict ?? "UNKNOWN"}. Risk score ${r?.riskScore ?? 0} out of 100. ${r?.recommendation ?? ""}`);
+    const spoken = formatSpokenBriefing(r, { style: "concise" });
+    speak(spoken);
   }
 }
 
@@ -206,7 +213,7 @@ export async function runInvestigation(
   client: Client,
   ollamaTools: OllamaTool[],
   userInput: string
-): Promise<void> {
+): Promise<any> {
   let lastReport: any = null;
   let reportGenerated = false; // Reset per run
   const seenCalls = new Set<string>();
@@ -247,7 +254,7 @@ export async function runInvestigation(
         console.log("\nModel commentary (non-authoritative):");
         console.log((message.content ?? "").trim());
       }
-      return;
+      return lastReport;
     }
 
     // Push the assistant turn (with its tool_calls) into history FIRST
@@ -358,6 +365,7 @@ export async function runInvestigation(
   console.log("\n⚠ Max steps reached — printing best-available report:");
   if (lastReport) printReport(lastReport);
   else console.log("(no report was generated)");
+  return lastReport;
 }
 
 // ====================================================================
@@ -449,12 +457,25 @@ export async function main(): Promise<void> {
   }
 
   const rl = readline.createInterface({ input, output });
+  let lastReport: any = null;
+  let lastSpokenText = "";
 
   try {
     while (true) {
       let line = "";
       if (activeMode === "voice") {
+        try {
+          const earconPath = defaultEarcons.getWavPath("listen_start");
+          defaultAudioPlayer.playFileSync(earconPath);
+        } catch {}
+
         const wav = recordVoice(Number(process.env.RECORD_SECONDS ?? 6));
+
+        try {
+          const earconStopPath = defaultEarcons.getWavPath("listen_stop");
+          defaultAudioPlayer.playFileSync(earconStopPath);
+        } catch {}
+
         if (wav) line = transcribe(wav).trim();
         if (!line) {
           line = (await rl.question("detective (text fallback)› ")).trim();
@@ -467,13 +488,62 @@ export async function main(): Promise<void> {
       if (!line) continue;
       if (["exit", "quit", ":q"].includes(line.toLowerCase())) break;
 
+      // Conversational intent classification
+      const classification = classifyVoiceIntent(line, lastReport !== null);
+
+      if (classification.intent === "EXIT") {
+        speak("Goodbye. Stay safe.");
+        break;
+      }
+
+      if (classification.intent === "REPEAT") {
+        if (lastSpokenText) {
+          console.log(`[Assistant] ${lastSpokenText}`);
+          speak(lastSpokenText);
+        } else {
+          speak("I haven't investigated any messages yet.");
+        }
+        continue;
+      }
+
+      if (classification.intent === "CONTROL") {
+        const cmdRes = handleVoiceCommand(classification);
+        if (cmdRes.handled) {
+          console.log(`[Assistant] ${cmdRes.speechResponse}`);
+          speak(cmdRes.speechResponse);
+          lastSpokenText = cmdRes.speechResponse;
+          continue;
+        }
+      }
+
+      if (classification.intent === "SMALLTALK") {
+        const talkRes = handleSmalltalk(line);
+        if (talkRes.handled) {
+          console.log(`[Assistant] ${talkRes.speechResponse}`);
+          speak(talkRes.speechResponse);
+          lastSpokenText = talkRes.speechResponse;
+          continue;
+        }
+      }
+
+      if (classification.intent === "EXPLAIN" && lastReport) {
+        const explanation = formatSpokenBriefing(lastReport, { style: "detailed" });
+        console.log(`[Assistant] ${explanation}`);
+        speak(explanation);
+        lastSpokenText = explanation;
+        continue;
+      }
+
       const urls = extractUrls(line);
       const augmented = urls.length
         ? `${line}\n\n[SYSTEM: URLs detected — inspect with inspect_url using these exact strings: ${urls.join(", ")}]`
         : line;
 
       try {
-        await runInvestigation(client, ollamaTools, augmented);
+        lastReport = await runInvestigation(client, ollamaTools, augmented);
+        if (lastReport) {
+          lastSpokenText = formatSpokenBriefing(lastReport, { style: "concise" });
+        }
       } catch (err: any) {
         console.error(colors.red(`Investigation error: ${err?.message ?? String(err)}`));
       }

@@ -1,7 +1,9 @@
 import express from "express";
+import path from "node:path";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { createVoiceApiRouter } from "./web/voiceApi.js";
 
 // ====================================================================
 // ALEXA + MCP — DIGITAL DETECTIVE SERVER
@@ -1036,6 +1038,8 @@ export function buildServer(): McpServer {
 
 export const app = express();
 app.use(express.json({ limit: "1mb" }));
+app.use(express.static(path.join(process.cwd(), "public")));
+app.use("/api/voice", createVoiceApiRouter());
 
 // POST /mcp handler
 app.post("/mcp", async (req, res) => {

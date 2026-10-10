@@ -57,3 +57,18 @@ This document records the friction items encountered during the development and 
 - **Root cause**: Hard dependencies on system audio commands without error catching or text fallback.
 - **Fix**: Created `src/voice.ts` wrapping `recordVoice()`, `transcribe()`, and `speak()` in try/catch blocks that gracefully log warnings and fall back to interactive text mode.
 - **Time cost**: 25 minutes.
+
+---
+
+### 8. Monotone One-Shot Speech & Missing Conversational Turn-Taking
+- **Symptom**: Agent produced mechanical terminal text readouts, lacked natural conversational turn-taking, lacked acoustic earcons/cues, and could not handle voice smalltalk or voice controls.
+- **Root cause**: Voice loop was tightly coupled to a single fixed recording interval and lacked dialogue state management, intent classification, multi-backend neural TTS, and spoken briefing formatting.
+- **Fix**: Built an end-to-end conversational voice engine comprising:
+  - Multi-backend TTS cascade (`edge-tts` neural voices + `spd-say` + `piper` + `espeak-ng` + LRU audio caching)
+  - Pure PCM earcon generator (`tones.ts`, `earcons.ts`) providing wake, listening start/stop, and verdict alerts
+  - Voice Activity / energy-based silence detection and audio trimming (`silence.ts`)
+  - Transcript post-processing and spoken URL normalization (`normalizer.ts`)
+  - Conversational Voice Dialogue Manager & Intent Classifier supporting smalltalk, help, controls, and scam investigations
+  - Natural Spoken Briefing generator transforming technical MCP reports into engaging spoken audio briefings
+  - Cyberpunk-themed Web Voice Assistant Dashboard with real-time audio waveform visualizer and speech API integration
+- **Time cost**: 45 minutes.

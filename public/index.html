@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Detective — Conversational Voice Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="background-glow"></div>
+
+  <header class="navbar">
+    <div class="brand">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          <path d="M2 12h20" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">DIGITAL DETECTIVE</h1>
+        <p class="brand-subtitle">ALEXA MCP CONVERSATIONAL VOICE AGENT</p>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="persona-select-container">
+        <label for="persona-select">Persona:</label>
+        <select id="persona-select">
+          <option value="alexa" selected>Alexa Detective</option>
+          <option value="detective">Cyber Detective</option>
+          <option value="forensics">Forensics Specialist</option>
+          <option value="advisor">Security Advisor</option>
+        </select>
+      </div>
+
+      <div class="status-badge" id="system-status">
+        <span class="status-dot"></span>
+        <span id="status-text">ONLINE</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <!-- Center Orb & Visualizer Section -->
+    <section class="voice-center">
+      <div class="orb-container">
+        <div class="glow-ring glow-ring-outer"></div>
+        <div class="glow-ring glow-ring-inner"></div>
+        <div class="voice-orb" id="voice-orb">
+          <div class="orb-core">
+            <svg id="mic-icon" viewBox="0 0 24 24" width="40" height="40" fill="currentColor">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="waveform-container">
+        <canvas id="waveform-canvas" width="600" height="70"></canvas>
+      </div>
+
+      <div class="state-banner" id="state-banner">
+        <span class="state-label">STATE:</span>
+        <span class="state-value" id="current-state-text">READY TO LISTEN</span>
+      </div>
+
+      <div class="mic-controls">
+        <button id="talk-btn" class="talk-btn" title="Click or press Space to Speak">
+          <span class="talk-btn-icon">🎙️</span>
+          <span class="talk-btn-text" id="talk-btn-label">HOLD OR TAP TO TALK</span>
+        </button>
+        <button id="mute-btn" class="secondary-btn" title="Mute voice output">
+          <span id="mute-icon">🔊</span>
+        </button>
+      </div>
+      <p class="voice-hint">Say: <em>"Alexa, is this job offer a scam?"</em> or <em>"Help"</em></p>
+    </section>
+
+    <!-- Side Panel: Transcript & Live Verdict Report -->
+    <section class="details-panel">
+      <div class="panel-card report-card" id="report-card">
+        <div class="card-header">
+          <h2>INVESTIGATION REPORT</h2>
+          <span class="verdict-tag verdict-idle" id="verdict-badge">WAITING</span>
+        </div>
+
+        <div class="risk-meter-container">
+          <div class="risk-label-group">
+            <span class="risk-title">CALIBRATED RISK SCORE</span>
+            <span class="risk-score" id="risk-score-value">0 / 100</span>
+          </div>
+          <div class="meter-bar-bg">
+            <div class="meter-bar-fill" id="risk-meter-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="report-section">
+          <h3>RED FLAGS & SIGNALS</h3>
+          <div class="red-flags-list" id="red-flags-container">
+            <span class="tag tag-empty">No active investigation</span>
+          </div>
+        </div>
+
+        <div class="report-section">
+          <h3>SPOKEN ADVISORY</h3>
+          <p class="spoken-briefing-text" id="spoken-briefing-text">
+            Speak a message or web link to begin autonomous multi-tool fraud inspection.
+          </p>
+        </div>
+      </div>
+
+      <div class="panel-card transcript-card">
+        <div class="card-header">
+          <h2>LIVE CONVERSATION</h2>
+          <button id="clear-chat-btn" class="text-btn">Clear</button>
+        </div>
+        <div class="chat-stream" id="chat-stream">
+          <div class="chat-msg msg-agent">
+            <div class="msg-author">AGENT</div>
+            <div class="msg-bubble">
+              Hello! I am Digital Detective. Speak to me or click the microphone to analyze suspicious offers or messages.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="voiceClient.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

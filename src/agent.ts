@@ -15,6 +15,7 @@ import { handleVoiceCommand } from "./dialogue/voiceCommands.js";
 import { handleSmalltalk } from "./dialogue/smalltalk.js";
 import { defaultEarcons } from "./audio/earcons.js";
 import { defaultAudioPlayer } from "./audio/player.js";
+import { cleanTranscript, isNoiseOnly } from "./stt/normalizer.js";
 
 // ====================================================================
 // ALEXA + MCP — DIGITAL DETECTIVE AGENT
@@ -408,15 +409,34 @@ export async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // 3. Connect MCP client
-  let transport: StreamableHTTPClientTransport;
-  let client: Client;
-  try {
-    transport = new StreamableHTTPClientTransport(new URL(MCP_URL));
-    client = new Client({ name: "digital-detective-agent", version: "1.0.0" });
-    await client.connect(transport);
-  } catch (err) {
+  // 3. Connect MCP client (with retry loop for concurrent startup)
+  let transport: StreamableHTTPClientTransport | undefined;
+  let client!: Client;
+  const maxRetries = 15;
+  let connected = false;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      transport = new StreamableHTTPClientTransport(new URL(MCP_URL));
+      client = new Client({ name: "digital-detective-agent", version: "1.0.0" });
+      await client.connect(transport);
+      connected = true;
+      break;
+    } catch {
+      if (attempt === 1) {
+        process.stdout.write(colors.dim(`Connecting to MCP server at ${MCP_URL}...`));
+      } else {
+        process.stdout.write(colors.dim("."));
+      }
+      await new Promise((r) => setTimeout(r, 600));
+    }
+  }
+
+  if (connected) {
+    process.stdout.write("\n");
+  } else {
     console.error(
+      "\n" +
       colors.red(
         `Cannot reach MCP server at ${MCP_URL}.\nPlease start it first via "npm run server".`
       )
@@ -476,7 +496,12 @@ export async function main(): Promise<void> {
           defaultAudioPlayer.playFileSync(earconStopPath);
         } catch {}
 
-        if (wav) line = transcribe(wav).trim();
+        if (wav) {
+          const raw = transcribe(wav).trim();
+          if (!isNoiseOnly(raw)) {
+            line = cleanTranscript(raw).trim();
+          }
+        }
         if (!line) {
           line = (await rl.question("detective (text fallback)› ")).trim();
         } else {

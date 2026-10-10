@@ -64,9 +64,23 @@ export function normalizeSpokenUrls(text: string): string {
 }
 
 /**
- * Determines whether the transcribed text is just background noise or meaningless filler.
+ * Determines whether the transcribed text is just background noise, Whisper hallucination, or meaningless filler.
  */
 export function isNoiseOnly(text: string): boolean {
+  if (!text) return true;
+  const lower = text.toLowerCase().trim();
+  if (
+    lower === "[blank_audio]" ||
+    lower === "[silence]" ||
+    lower === "silence" ||
+    lower === "[ silence ]" ||
+    lower.includes("blank_audio") ||
+    lower.includes("[silence]") ||
+    lower.includes("[ silence ]")
+  ) {
+    return true;
+  }
+
   const cleaned = cleanTranscript(text);
   if (!cleaned) return true;
   if (cleaned.length < 2) return true;
@@ -80,6 +94,7 @@ export function isNoiseOnly(text: string): boolean {
     "subtitles by",
     "you",
     "bye",
+    "silence",
   ];
-  return noisePhrases.includes(cleaned.toLowerCase()) && cleaned.length < 5;
+  return noisePhrases.includes(cleaned.toLowerCase()) && cleaned.length < 10;
 }

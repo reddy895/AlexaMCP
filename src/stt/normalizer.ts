@@ -29,11 +29,14 @@ export function cleanTranscript(raw: string): string {
  * Strips common assistant wake triggers if uttered at sentence start.
  * e.g. "Alexa, check this link..." -> "check this link..."
  * e.g. "Hey Detective, is this a scam?" -> "is this a scam?"
+ * Note: If the entire utterance was just the greeting (e.g. "Hello Detective"),
+ * preserves the utterance so it can be handled by the conversational greeting intent.
  */
 export function stripWakeWords(text: string): string {
-  return text
+  const stripped = text
     .replace(/^(hey|hi|hello|ok|okay)?\s*(alexa|detective|digital detective)\s*[,:]?\s*/i, "")
     .trim();
+  return stripped || text.trim();
 }
 
 /**
@@ -53,11 +56,8 @@ export function normalizeSpokenUrls(text: string): string {
     .replace(/\bslash\b/gi, "/");
 
   // Fix spaces introduced inside protocol and domain parts
-  // e.g., "http ://" -> "http://"
   res = res.replace(/(https?)\s*:\/\/\s*/gi, "$1://");
-  // e.g., "scam .xyz" -> "scam.xyz"
   res = res.replace(/(\w+)\s*(\.(?:com|org|net|xyz|io|in|ai|gov|edu))\b/gi, "$1$2");
-  // e.g., ".xyz / login" -> ".xyz/login"
   res = res.replace(/(\S+)\s*\/\s*(\S+)/g, "$1/$2");
 
   return res;

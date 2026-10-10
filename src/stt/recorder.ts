@@ -51,9 +51,9 @@ export class AudioRecorder {
     const targetPath = outputPath ?? path.join(os.tmpdir(), `alexa-record-${Date.now()}.wav`);
 
     if (this.isMock) {
-      // In mock mode, write empty or silent WAV
+      // In mock mode, generate audio with audible speech energy
       const { generateTone } = await import("../audio/tones.js");
-      fs.writeFileSync(targetPath, generateTone(440, duration * 1000, { volume: 0.01 }));
+      fs.writeFileSync(targetPath, generateTone(440, duration * 1000, { volume: 0.5 }));
       return targetPath;
     }
 
@@ -79,7 +79,6 @@ export class AudioRecorder {
     durationSeconds: number
   ): Promise<boolean> {
     return new Promise((resolve) => {
-      // arecord -D <dev> -d <sec> -r 16000 -c 1 -f S16_LE -t wav -q <targetPath>
       const args = [
         "-D",
         device,

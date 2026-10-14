@@ -1,223 +1,320 @@
-# Alexa + MCP Question-Answering AI Assistant
+# Alexa MCP — Local-First AI Assistant
 
-A production-quality, backend-only AI assistant that combines evidence-grounded reasoning, local zero-cost LLMs (via Ollama), persistent SQLite memory, lexical knowledge retrieval, and the official Model Context Protocol (MCP) Streamable HTTP transport.
+A backend-first AI assistant that connects natural-language questions to Model Context Protocol (MCP) tools. Designed to answer questions intelligently, retrieve relevant local knowledge, execute validated tools, and use a local LLM through Ollama.
 
-The assistant intelligently answers user questions—distinguishing between direct conceptual reasoning, local document retrieval, multi-tool orchestration, scoped memory recall, and consequential actions requiring two-phase confirmation.
+> **Status:** Update this README to reflect the features actually implemented and tested in the repository.
 
----
+## Features
 
-## 1. Key Capabilities
+- **Natural-language question answering** — answer questions directly or use relevant tools.
+- **MCP integration** — expose backend capabilities to compatible MCP clients.
+- **Local AI** — use Ollama without requiring paid LLM APIs.
+- **Tool orchestration** — select, validate, and execute relevant tools.
+- **Knowledge retrieval** — search configured local documents and ground answers in evidence.
+- **Persistent memory** — store and retrieve explicitly requested preferences.
+- **SQLite storage** — lightweight local persistence.
+- **Security-first design** — input validation, access controls, execution limits, and safe error handling.
+- **Backend only** — no frontend or dashboard required.
 
-- **Evidence-Grounded Question Answering**: Distinguishes direct conceptual questions from questions requiring workspace inspection or document search. If evidence is missing, it admits the limitation directly rather than hallucinating.
-- **Official MCP Streamable HTTP Server**: Exposes standard MCP tools, resources, and prompts over Streamable HTTP (`/mcp`) for seamless integration with Claude Desktop, Cursor, and custom clients.
-- **100% Local & Zero-Cost Stack**: Powered by Ollama (`qwen2.5:3b` default) and Node.js 22 native SQLite (`DatabaseSync`), requiring zero paid cloud API keys.
-- **Local Knowledge Retrieval**: Incremental document ingestion, tokenized chunking, and lexical BM25 ranking over local Markdown, code, and documentation files with source attribution.
-- **Scoped Persistent Memory**: Stores explicit user preferences and project facts across server restarts with scope isolation and expiration policies.
-- **Production Security Defaults**: Token-bucket rate limiting, workspace boundary guard (path traversal prevention), two-phase cryptographic confirmation for mutating actions (`HMAC-SHA256`), constant-time bearer authentication, and automated PII redaction.
-- **Conversational Voice Dialogue & Legacy Tools**: Preserves Digital Detective scam/fraud investigation tools and conversational voice dialogue capabilities.
+## Architecture
 
----
+```mermaid
+flowchart TD
+    U[User] --> C[MCP Client]
+    C --> T[Streamable HTTP Transport]
+    T --> S[MCP Server]
 
-## 2. Architecture Overview
+    S --> V[Request Validation and Authorization]
+    V --> A[Assistant Orchestrator]
 
-```
-[MCP Client / Alexa Voice / HTTP Client]
-                   │
-                   ▼
-┌────────────────────────────────────────────────────────┐
-│ 1. Transport & Ingress Security                        │
-│    - Streamable HTTP Transport (POST /mcp)             │
-│    - Token-Bucket Rate Limiter & Concurrency Guard     │
-│    - Constant-Time Bearer Auth (timingSafeEqual)       │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-                           ▼
-┌────────────────────────────────────────────────────────┐
-│ 2. Request Lifecycle & Context                         │
-│    - Correlation ID, Monotonic Deadlines, Scopes       │
-│    - Intent Classifier & Loop Detection                │
-└──────────────┬───────────────────────────┬─────────────┘
-               │                           │
-               ▼                           ▼
-┌────────────────────────────┐ ┌─────────────────────────┐
-│ 3. Core Tool Registry      │ │ 4. Knowledge Retrieval  │
-│    - Typed Zod Schemas     │ │    - Content Hashing    │
-│    - 2-Phase Confirmation  │ │    - Lexical BM25 Search│
-│    - Bounded Timeouts      │ │    - Provenance Builder │
-└──────────────┬─────────────┘ └───────────┬─────────────┘
-               │                           │
-               ▼                           ▼
-┌────────────────────────────────────────────────────────┐
-│ 5. SQLite Persistent Storage (Native WAL Mode)         │
-│    - Versioned Migrations, Parameterized Queries       │
-│    - Scoped Memory Repository & Document Index         │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-                           ▼
-┌────────────────────────────────────────────────────────┐
-│ 6. Model Provider Abstraction                          │
-│    - Ollama Client with Preflight & Exponential Backoff│
-│    - Mock Provider for 100% Deterministic Testing      │
-└────────────────────────────────────────────────────────┘
+    A --> D{Question Type}
+
+    D -->|General Question| L[Ollama LLM]
+    D -->|Tool Required| R[Tool Registry and Executor]
+    D -->|Knowledge Required| K[Knowledge Retrieval]
+
+    R --> RI[Repository Inspector]
+    R --> ER[Error Analyzer]
+    R --> MS[Memory Service]
+    R --> HS[System Health]
+
+    K --> DB[(SQLite and FTS Index)]
+    MS --> DB
+    RI --> FS[Approved Project Workspace]
+
+    L --> G[Answer Generation]
+    R --> G
+    K --> G
+
+    G --> O[Structured MCP Response]
+    O --> C
 ```
 
----
+## Technology Stack
 
-## 3. Requirements
+| Technology | Purpose |
+|---|---|
+| TypeScript | Type-safe backend development |
+| Node.js | Runtime |
+| Model Context Protocol | AI tool integration |
+| MCP TypeScript SDK | MCP server implementation |
+| Ollama | Local LLM inference |
+| SQLite | Persistent storage |
+| Zod | Input and configuration validation |
+| Vitest | Automated testing, if configured |
 
-- **Node.js**: v22 LTS (supports native `node:sqlite`)
-- **Ollama**: Local AI runner (`curl -fsSL https://ollama.com/install.sh | sh`)
-- **Platform**: Linux / macOS / WSL
+Use the actual versions and packages defined by the repository's `package.json` and lockfile.
 
----
+## Project Structure
 
-## 4. Installation & Setup
+The following is a suggested architecture. Adapt it to the existing implementation.
 
-### 4.1 Clone and Install Dependencies
+```text
+alexa-mcp/
+├── src/
+│   ├── server/
+│   │   ├── create-server.ts
+│   │   └── transport.ts
+│   ├── config/
+│   │   └── env.ts
+│   ├── core/
+│   │   ├── assistant.ts
+│   │   └── orchestrator.ts
+│   ├── providers/
+│   │   └── ollama/
+│   ├── mcp/
+│   │   └── register-tools.ts
+│   ├── tools/
+│   │   ├── registry.ts
+│   │   └── definitions/
+│   ├── retrieval/
+│   ├── memory/
+│   ├── storage/
+│   └── security/
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── security/
+├── docs/
+├── .env.example
+├── .gitignore
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js version supported by the project.
+- npm or the package manager specified by the repository.
+- Git.
+- Ollama, if using local model inference.
+
+### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
-cd "Alexa MCP"
-npm install
+git clone <YOUR_REPOSITORY_URL>
+cd <YOUR_REPOSITORY_DIRECTORY>
 ```
 
-### 4.2 Ollama Model Configuration
+### 2. Install dependencies
 
-1. Start the Ollama daemon:
-   ```bash
-   ollama serve
-   ```
-2. Pull the default model:
-   ```bash
-   ollama pull qwen2.5:3b
-   ```
-   *(Optional lightweight alternatives: `ollama pull qwen2.5:1.5b` or `ollama pull llama3.2:1b`)*
-
-3. Run provider diagnostics:
-   ```bash
-   npm run diagnostics
-   ```
-
----
-
-## 5. Running the Server
-
-### 5.1 Start MCP Server (Streamable HTTP)
+For an npm project with a committed `package-lock.json`:
 
 ```bash
-npm run server
+npm ci
 ```
-Server starts on `http://localhost:3001` with:
-- `POST /mcp`: Streamable HTTP MCP endpoint
-- `GET /healthz`: Basic health probe
-- `GET /api/system/status`: Real-time system diagnostics
 
-### 5.2 Interactive Text / Voice REPL
+Otherwise, use the package manager and installation command appropriate for the repository.
+
+### 3. Configure environment variables
+
+If `.env.example` exists:
 
 ```bash
-# Interactive Text REPL
-npm run agent:text
-
-# Two-Way Conversational Voice Agent
-npm run agent:voice
+cp .env.example .env
 ```
 
----
+Edit `.env` using the environment variable names supported by the application.
 
-## 6. MCP Client Configuration
+Never commit credentials, tokens, or private configuration.
 
-### Claude Desktop (`claude_desktop_config.json`)
+### 4. Set up Ollama
+
+Install Ollama from:
+
+https://ollama.com/download
+
+Pull a compatible model. For example:
+
+```bash
+ollama pull qwen2.5:7b
+```
+
+This is an example model, not a mandatory choice. Select a model appropriate for your hardware and the capabilities you need.
+
+Configure the Ollama URL and model name using the variables supported by your project.
+
+### 5. Start the server
+
+Use the scripts actually defined in `package.json`. Common examples are:
+
+```bash
+npm run dev
+```
+
+For a production build, if the scripts are available:
+
+```bash
+npm run build
+npm start
+```
+
+Check the server logs for the actual listening address and MCP endpoint.
+
+## Connecting an MCP Client
+
+Configure a compatible MCP client to connect to the server's Streamable HTTP endpoint.
+
+Example configuration shape:
 
 ```json
 {
   "mcpServers": {
-    "alexa-assistant": {
-      "url": "http://localhost:3001/mcp"
+    "alexa-mcp": {
+      "url": "http://127.0.0.1:3000/mcp"
     }
   }
 }
 ```
 
-### Cursor IDE
-1. Open **Settings -> Features -> MCP Servers**.
-2. Click **Add New MCP Server**.
-3. Set **Type** to `SSE` or `Streamable HTTP` with URL: `http://localhost:3001/mcp`.
+**Important:** Replace the URL with the actual endpoint exposed by your server. The example assumes port `3000` and path `/mcp`; these values must be verified against the implementation.
 
----
+An MCP server is not automatically an Alexa skill. Confirm the requirements of your intended Alexa or Alexa+ integration separately.
 
-## 7. Available Core MCP Tools
+## Example Questions
 
-| Tool | Description |
-|---|---|
-| `ask_assistant` | Evidence-grounded natural-language question answering with automated tool orchestration. |
-| `search_knowledge` | Lexical BM25 search across indexed project documents and Markdown files. |
-| `inspect_repository` | Workspace structure, dependency analysis, and file inspection within safe boundaries. |
-| `analyze_error` | Root-cause analysis of stack traces, error messages, and test failures. |
-| `manage_memory` | Save, retrieve, list, or delete scoped user preferences with explicit confirmation for deletion. |
-| `get_system_status` | Operational health diagnostics for Ollama, SQLite, tools, and retrieval status. |
-| *Digital Detective Suite* | `inspect_url`, `extract_claims`, `analyze_message`, `search_evidence`, `calculate_risk`. |
+Depending on which tools are implemented, you could ask:
 
----
+- What can you help me with?
+- Explain the architecture of this repository.
+- Inspect the project structure and summarize its components.
+- Analyze this error message and suggest likely causes.
+- Search the configured knowledge base for relevant information.
+- Remember this project preference.
+- Retrieve my saved project preferences.
+- Check whether the database and model provider are available.
 
-## 8. Example Questions & Invocations
+The assistant should use real evidence, report missing information, and never claim a tool succeeded when it failed.
 
-- *"Explain how my project works and what dependencies are installed."*  
-  -> Automatically routes to `inspect_repository`.
-- *"Find the root cause of this error: TypeError: Cannot read properties of undefined (reading 'digest')"*  
-  -> Automatically routes to `analyze_error`.
-- *"Search documentation for how rate limiting is configured."*  
-  -> Retrieves excerpts and citations from `docs/CONFIGURATION.md`.
-- *"Remember that my target deployment environment is Ubuntu 24.04 LTS."*  
-  -> Saves preference to scoped SQLite memory.
-- *"What did I ask you to remember?"*  
-  -> Recalls scoped preferences from memory.
-- *"Delete all memories from infra scope."*  
-  -> Halts and requests explicit two-phase confirmation before executing.
+## Core Components
 
----
+### Assistant Orchestrator
 
-## 9. Testing & Verification
+Routes requests to direct model reasoning, knowledge retrieval, or tool execution. Limits the number of execution steps and handles failures safely.
 
-The test suite runs 100% offline without requiring a running Ollama daemon or paid APIs:
+### Ollama Provider
+
+Connects to the configured local model and handles timeouts, unavailable models, and provider errors.
+
+### MCP Server
+
+Registers tools and exposes them through the MCP protocol using the transport supported by the implementation.
+
+### Tool Registry
+
+Validates tool arguments, checks permissions, applies execution limits, and invokes approved operations.
+
+### Knowledge Retrieval
+
+Indexes explicitly configured local documents, searches relevant content, and preserves source information for grounded answers.
+
+### Persistent Memory
+
+Stores explicitly requested preferences and facts. Supports retrieval and deletion without automatically saving every conversation.
+
+### SQLite Storage
+
+Persists structured application data, memory, and searchable document metadata.
+
+## Security
+
+- Validate all external inputs.
+- Keep secrets out of source control.
+- Restrict filesystem access to approved directories.
+- Treat retrieved documents and tool results as untrusted input.
+- Require authorization for protected operations.
+- Apply request timeouts and execution limits.
+- Require confirmation for destructive or externally consequential actions.
+- Avoid logging secrets or sensitive conversations.
+- Protect remote deployments with appropriate authentication and TLS.
+
+Do not expose an unauthenticated development server to the public internet.
+
+## Testing
+
+Use the commands configured in `package.json`. Typical examples include:
 
 ```bash
-# Run all Vitest suites (unit, integration, security, E2E)
+npm run typecheck
+npm run lint
 npm test
-
-# Run specific suites
-npm run test:unit
-npm run test:integration
-npm run test:security
-npm run test:e2e
-
-# Run legacy regression, contradiction, and voice suites
-npm run test:regression
-npm run test:legacy
-npm run test:contradiction
-npm run test:voice
-
-# Full verification across all suites
-npm run test:all
+npm run build
 ```
 
+These commands must exist in the repository before they can be used.
+
+Important test scenarios include:
+
+- MCP initialization and tool discovery.
+- Valid and invalid tool inputs.
+- Direct question answering.
+- Retrieval-assisted answering.
+- Ollama unavailable or timing out.
+- Memory persistence and deletion.
+- Unauthorized tool invocation.
+- Prompt-injection attempts in retrieved documents.
+- Graceful shutdown and error handling.
+
+Use mock model providers in ordinary automated tests where possible so CI does not require a running local model or paid API.
+
+## Configuration
+
+Document the exact environment variables in `.env.example` and `docs/CONFIGURATION.md`.
+
+Common configuration categories include:
+
+| Setting | Purpose |
+|---|---|
+| Server host and port | HTTP listener configuration |
+| Ollama URL | Local model service address |
+| Model name | Selected local LLM |
+| Database path | SQLite file location |
+| Document directories | Approved knowledge sources |
+| Request timeout | Maximum request duration |
+| Tool execution limit | Bounds tool execution |
+| Log level | Logging verbosity |
+| Authentication | Remote access protection |
+
+The table describes configuration categories rather than exact environment variable names. Use the actual names and defaults from the source code.
+
+## Contributing
+
+1. Inspect the existing implementation before changing it.
+2. Keep pull requests focused.
+3. Add tests for new functionality and bug fixes.
+4. Run relevant checks before submitting a pull request.
+5. Update documentation when behavior changes.
+6. Report test failures and known limitations honestly.
+
+Use descriptive commit messages. Do not create empty or artificial commits to inflate the Git history.
+
+## License
+
+Add the license that applies to this repository. Include the corresponding license file before claiming a specific open-source license.
+
 ---
 
-## 10. Security & Threat Model
-
-- **Path Traversal Protection**: Filesystem access is strictly restricted to `WORKSPACE_ROOT`. Directory traversal sequences (`..`) are rejected.
-- **Two-Phase Confirmation**: Consequential and mutating actions generate a cryptographic HMAC token and require confirmation before modifying state.
-- **PII & Credential Redaction**: Automated sanitization masks API keys, passwords, and personal data in logs.
-- **Constant-Time Comparison**: Bearer tokens are compared using `crypto.timingSafeEqual`.
-- **SQL Injection Prevention**: 100% parameterized SQL prepared statements.
-
----
-
-## 11. Documentation Index
-
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): Full architectural philosophy, component diagrams, and 12-step lifecycle.
-- [docs/API.md](docs/API.md): HTTP endpoints, SSE transport, status codes, and JSON error taxonomy.
-- [docs/MCP_CLIENT_SETUP.md](docs/MCP_CLIENT_SETUP.md): Configuration guides for Claude, Cursor, and custom clients.
-- [docs/CONFIGURATION.md](docs/CONFIGURATION.md): Complete list of environment variables and defaults.
-- [docs/SECURITY.md](docs/SECURITY.md): Threat model, boundaries, and production hardening checklist.
-- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): Solutions for missing models, port collisions, and database recovery.
-- [docs/COMMIT_PLAN.md](docs/COMMIT_PLAN.md): 80-commit engineering roadmap and verification log.
+**Note:** Keep this README synchronized with the actual implementation. Verify supported tools, commands, endpoint paths, configuration variables, and test results before publishing.

@@ -1,16 +1,79 @@
-import { createHmac } from "node:crypto";
-import { ConfirmationRequiredError } from "../core/errors.js";
+import { createHmac, randomUUID } from "node:crypto";
+import { ConfirmationRequiredError, PermissionDeniedError } from "../core/errors.js";
 import type { ProposedAction, ExecutionContext } from "../core/types.js";
 
 const CONFIRMATION_SECRET = process.env.CONFIRMATION_SECRET || "alexa-mcp-internal-action-key";
 
 export type ToolEffectClass = "read_only" | "locally_mutating" | "externally_consequential";
 
-export interface ToolEffectMetadata {
-  effectClass: ToolEffectClass;
-  requiresExplicitConfirmation: boolean;
-  resourcePattern?: string;
+export interface PendingActionRecord {
+  id: string;
+  actionId: string;
+  resource: string;
+  description: string;
+  payload: Record<string, unknown>;
+  token: string;
+  expiresAt: number;
 }
+
+export class ConfirmationManager {
+  private pending = new Map<string, PendingActionRecord>();
+
+  public createPendingAction(
+    actionId: string,
+    resource: string,
+    description: string,
+    payload: Record<string, unknown>,
+    ttlMs = 300_000
+  ): PendingActionRecord {
+    const id = `act_${randomUUID()}`;
+    const token = generateConfirmationToken(actionId, resource);
+    const record: PendingActionRecord = {
+      id,
+      actionId,
+      resource,
+      description,
+      payload,
+      token,
+      expiresAt: Date.now() + ttlMs,
+    };
+
+    this.pending.set(token, record);
+    return record;
+  }
+
+  public validateAndConsume(token: string, actionId: string, resource: string): PendingActionRecord {
+    const record = this.pending.get(token);
+    if (!record) {
+      if (!verifyConfirmationToken(token, actionId, resource)) {
+        throw new PermissionDeniedError("Invalid or forged confirmation token.");
+      }
+      return {
+        id: "stateless",
+        actionId,
+        resource,
+        description: "Stateless action",
+        payload: {},
+        token,
+        expiresAt: Date.now() + 60_000,
+      };
+    }
+
+    if (Date.now() > record.expiresAt) {
+      this.pending.delete(token);
+      throw new PermissionDeniedError("Action confirmation has expired. Please re-initiate the request.");
+    }
+
+    if (record.actionId !== actionId || record.resource !== resource) {
+      throw new PermissionDeniedError("Confirmation token mismatch for the intended action or resource.");
+    }
+
+    this.pending.delete(token);
+    return record;
+  }
+}
+
+export const confirmationManager = new ConfirmationManager();
 
 export function generateConfirmationToken(actionId: string, resource: string): string {
   return createHmac("sha256", CONFIRMATION_SECRET)
@@ -34,15 +97,24 @@ export function assertActionConfirmed(
   }
 
   const token = context.confirmationToken;
-  if (!token || !verifyConfirmationToken(token, action.actionId, action.resource)) {
+  if (!token) {
+    const pending = confirmationManager.createPendingAction(
+      action.actionId,
+      action.resource,
+      action.description,
+      action.payload
+    );
+
     throw new ConfirmationRequiredError(
-      `Action "${action.description}" on resource "${action.resource}" requires explicit confirmation.`,
+      `Action "${action.description}" affecting resource "${action.resource}" requires explicit confirmation before execution.`,
       {
-        actionId: action.actionId,
-        resource: action.resource,
-        payload: action.payload,
-        confirmationToken: generateConfirmationToken(action.actionId, action.resource),
+        actionId: pending.actionId,
+        resource: pending.resource,
+        confirmationToken: pending.token,
+        expiresAt: new Date(pending.expiresAt).toISOString(),
       }
     );
   }
+
+  confirmationManager.validateAndConsume(token, action.actionId, action.resource);
 }

@@ -66,4 +66,5 @@ export interface ExecutionContext {
   abortSignal: AbortSignal;
   confirmationToken?: string;
   isConfirmed(actionId: string): boolean;
+  checkDeadline?(): void;
 }

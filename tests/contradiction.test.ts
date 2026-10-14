@@ -1,7 +1,8 @@
+import type { Server } from "node:http";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { safeJson, extractUrls, sanitizeSubject } from "../src/agent.js";
-import { calculateRiskFloor } from "../src/server.js";
+import { calculateRiskFloor, app } from "../src/server.js";
 
 async function runContradictionTests() {
   console.log("=== STARTING CONTRADICTION & FIX A-D TEST SUITE (B1 - B5) ===\n");
@@ -47,8 +48,13 @@ async function runContradictionTests() {
   assert("safeJson returns object for valid JSON", safeJson('{"valid":true}')?.valid === true);
   assert("safeJson parses array correctly", Array.isArray(safeJson('[1,2,3]')));
 
-  // Connect to MCP server
-  const transport = new StreamableHTTPClientTransport(new URL("http://localhost:3001/mcp"));
+  // Connect to isolated in-process MCP server
+  let server!: Server;
+  await new Promise<void>((resolve) => {
+    server = app.listen(0, () => resolve());
+  });
+  const port = (server.address() as any).port;
+  const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`));
   const client = new Client({ name: "contradiction-test", version: "1.0.0" });
   await client.connect(transport);
 
@@ -100,6 +106,7 @@ async function runContradictionTests() {
   assert("Report verdict matches authoritative tool risk verdict", reportData.verdict === "HIGH RISK");
 
   await client.close();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
 
   console.log(`\n=== RESULTS: ${passed}/${total} CONTRADICTION TESTS PASSED ===\n`);
   if (passed !== total) process.exit(1);

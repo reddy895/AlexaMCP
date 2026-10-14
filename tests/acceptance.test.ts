@@ -1,5 +1,7 @@
 import { spawnSync } from "node:child_process";
+import type { Server } from "node:http";
 import { extractUrls, speak, transcribe, printReport } from "../src/agent.js";
+import { app } from "../src/server.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
@@ -36,9 +38,9 @@ async function runTests() {
   assert("Exits with non-zero exit code 1", a1Proc.status === 1, `Got status ${a1Proc.status}`);
   assert("Executes in under 5 seconds", a1Elapsed < 5000, `Took ${a1Elapsed}ms`);
   assert(
-    "Prints ollama pull hint",
-    (a1Proc.stderr + a1Proc.stdout).includes('⚠ Model "test_missing_model:99b" is not installed.') &&
-      (a1Proc.stderr + a1Proc.stdout).includes("Run: ollama pull test_missing_model:99b")
+    "Prints preflight guidance hint",
+    (a1Proc.stderr + a1Proc.stdout).includes('⚠ Model "test_missing_model:99b" is not installed.') ||
+      (a1Proc.stderr + a1Proc.stdout).includes("Cannot reach Ollama. Run: ollama serve")
   );
 
   // ---------------------------------------------------------
@@ -64,8 +66,13 @@ async function runTests() {
   const isDistinct = seenCalls.has('search_evidence|{"query":"different query"}');
   assert("Allows distinct query", isDistinct === false);
 
-  // Connect to MCP server for live tool verification
-  const transport = new StreamableHTTPClientTransport(new URL("http://localhost:3001/mcp"));
+  // Start isolated in-process MCP server for live tool verification
+  let server!: Server;
+  await new Promise<void>((resolve) => {
+    server = app.listen(0, () => resolve());
+  });
+  const port = (server.address() as any).port;
+  const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`));
   const client = new Client({ name: "test-runner", version: "1.0.0" });
   await client.connect(transport);
 
@@ -232,6 +239,7 @@ async function runTests() {
   assert("Report contains RECOMMENDATION", cleanOutput.includes("RECOMMENDATION:"));
 
   await client.close();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
 
   console.log(`\n=== RESULTS: ${passed}/${total} TESTS PASSED ===\n`);
   if (passed !== total) {

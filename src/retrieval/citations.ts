@@ -29,7 +29,7 @@ export class CitationBuilder {
     const lines: string[] = ["\n\n### Sources & Evidence:"];
     list.forEach((c, idx) => {
       const loc = c.location ? ` (${c.location})` : "";
-      lines.push(`${idx + 1}. **${c.title}**${loc}: "${c.excerpt.slice(0, 200)}..."`);
+      lines.push(`${idx + 1}. **${c.title}** [${c.sourceId}]${loc}: "${c.excerpt.slice(0, 200)}..."`);
     });
     return lines.join("\n");
   }

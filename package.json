@@ -17,6 +17,7 @@
     "test:voice": "tsx tests/voiceSuite.test.ts",
     "test:all": "npm run test && npm run test:regression && npm run test:voice",
     "typecheck": "tsc --noEmit",
+    "diagnostics": "tsx src/cli/diagnostic.ts",
     "agent:voice": "DD_MODE=voice tsx src/agent.ts",
     "agent:text": "DD_MODE=text tsx src/agent.ts"
   },

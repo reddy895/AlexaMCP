@@ -58,7 +58,7 @@ export function formatRelevantExcerpt(
     return content.slice(0, maxExcerptLength) + (content.length > maxExcerptLength ? "..." : "");
   }
 
-  const start = Math.max(0, bestIdx - 60);
+  const start = Math.max(0, bestIdx - 15);
   const end = Math.min(content.length, start + maxExcerptLength);
   const prefix = start > 0 ? "... " : "";
   const suffix = end < content.length ? " ..." : "";

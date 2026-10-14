@@ -52,7 +52,7 @@ export class OrchestrationEngine {
       .map((t) => ({
         name: t.name,
         description: t.description,
-        parameters: t.parameters,
+        parameters: (t.parameters as any) ?? {},
       }));
 
     // If retrieval is requested and engine is available, inject retrieval search tool if not already present

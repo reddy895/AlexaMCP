@@ -3,3 +3,15 @@ dist/
 *.log
 .DS_Store
 .env
+
+# SQLite local data directories and database artifacts
+.data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Cache and coverage
+.cache/
+coverage/
+.vitest/

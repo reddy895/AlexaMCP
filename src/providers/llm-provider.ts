@@ -15,6 +15,7 @@ export interface ModelGenerationOptions {
   signal?: AbortSignal;
   temperature?: number;
   maxTokens?: number;
+  timeoutMs?: number;
 }
 
 export interface ModelResponse {
@@ -27,7 +28,32 @@ export interface ModelResponse {
   };
 }
 
+export interface ModelCapabilities {
+  supportsToolCalling: boolean;
+  contextWindow: number;
+  supportsSystemPrompt: boolean;
+  isAvailable: boolean;
+}
+
+export interface ProviderHealthResult {
+  isHealthy: boolean;
+  providerName: string;
+  model: string;
+  latencyMs: number;
+  availableModels?: string[];
+  error?: string;
+}
+
+export interface ToolSchemaDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
 export interface ILanguageModelProvider {
+  readonly providerName: string;
+  readonly modelName: string;
+
   generateText(
     messages: ChatMessage[],
     options?: ModelGenerationOptions
@@ -35,18 +61,11 @@ export interface ILanguageModelProvider {
 
   chatWithTools(
     messages: ChatMessage[],
-    tools: Array<{
-      name: string;
-      description: string;
-      parameters: Record<string, unknown>;
-    }>,
+    tools: ToolSchemaDefinition[],
     options?: ModelGenerationOptions
   ): Promise<ModelResponse>;
 
-  healthCheck(): Promise<{
-    isHealthy: boolean;
-    model: string;
-    latencyMs: number;
-    error?: string;
-  }>;
+  healthCheck(): Promise<ProviderHealthResult>;
+
+  getCapabilities(): Promise<ModelCapabilities>;
 }

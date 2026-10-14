@@ -6,11 +6,17 @@
     "server": "tsx src/server.ts",
     "agent": "tsx src/agent.ts",
     "dev": "concurrently -n MCP,AGENT -c cyan,magenta \"npm run server\" \"npm run agent\"",
-    "test": "tsx tests/acceptance.test.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:security": "vitest run tests/security",
+    "test:e2e": "vitest run tests/e2e",
+    "test:legacy": "tsx tests/acceptance.test.ts",
     "test:contradiction": "tsx tests/contradiction.test.ts",
     "test:regression": "tsx tests/regression.test.ts",
     "test:voice": "tsx tests/voiceSuite.test.ts",
-    "test:all": "tsx tests/acceptance.test.ts && tsx tests/contradiction.test.ts && tsx tests/regression.test.ts && tsx tests/voiceSuite.test.ts",
+    "test:all": "npm run test && npm run test:regression && npm run test:voice",
+    "typecheck": "tsc --noEmit",
     "agent:voice": "DD_MODE=voice tsx src/agent.ts",
     "agent:text": "DD_MODE=text tsx src/agent.ts"
   },
@@ -20,10 +26,12 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.5.0",
     "concurrently": "^9.0.1",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^5.0.4"
   }
 }

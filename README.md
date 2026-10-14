@@ -1,193 +1,223 @@
-# Digital Detective
+# Alexa + MCP Question-Answering AI Assistant
 
-Digital Detective is an AI-powered fraud and scam investigation agent built for the Amazon Developer Hackathon (Alexa+ / MCP track). It combines local LLM reasoning via Ollama with the official Model Context Protocol (MCP) streamable HTTP server. When presented with suspicious digital offers, messages, or URLs, the agent executes an autonomous multi-step investigation loop across real MCP tools—extracting factual claims, analyzing linguistic red flags, inspecting target domains with SSRF protection, searching live DuckDuckGo web evidence, cross-referencing conflicting signals, and calculating calibrated risk scores—delivering an evidence-backed verdict without relying on LLM memory.
+A production-quality, backend-only AI assistant that combines evidence-grounded reasoning, local zero-cost LLMs (via Ollama), persistent SQLite memory, lexical knowledge retrieval, and the official Model Context Protocol (MCP) Streamable HTTP transport.
 
-## Prerequisites
+The assistant intelligently answers user questions—distinguishing between direct conceptual reasoning, local document retrieval, multi-tool orchestration, scoped memory recall, and consequential actions requiring two-phase confirmation.
 
-- **Node.js 20+** (ESM support enabled)
-- **Ollama** installed and running (`ollama serve`)
-- A tool-calling LLM model:
-  ```bash
-  ollama pull qwen2.5:3b
-  ```
-  *(or `qwen2.5:1.5b`, `llama3.1:8b`, or `mistral-nemo`)*
+---
 
-## Install
+## 1. Key Capabilities
+
+- **Evidence-Grounded Question Answering**: Distinguishes direct conceptual questions from questions requiring workspace inspection or document search. If evidence is missing, it admits the limitation directly rather than hallucinating.
+- **Official MCP Streamable HTTP Server**: Exposes standard MCP tools, resources, and prompts over Streamable HTTP (`/mcp`) for seamless integration with Claude Desktop, Cursor, and custom clients.
+- **100% Local & Zero-Cost Stack**: Powered by Ollama (`qwen2.5:3b` default) and Node.js 22 native SQLite (`DatabaseSync`), requiring zero paid cloud API keys.
+- **Local Knowledge Retrieval**: Incremental document ingestion, tokenized chunking, and lexical BM25 ranking over local Markdown, code, and documentation files with source attribution.
+- **Scoped Persistent Memory**: Stores explicit user preferences and project facts across server restarts with scope isolation and expiration policies.
+- **Production Security Defaults**: Token-bucket rate limiting, workspace boundary guard (path traversal prevention), two-phase cryptographic confirmation for mutating actions (`HMAC-SHA256`), constant-time bearer authentication, and automated PII redaction.
+- **Conversational Voice Dialogue & Legacy Tools**: Preserves Digital Detective scam/fraud investigation tools and conversational voice dialogue capabilities.
+
+---
+
+## 2. Architecture Overview
+
+```
+[MCP Client / Alexa Voice / HTTP Client]
+                   │
+                   ▼
+┌────────────────────────────────────────────────────────┐
+│ 1. Transport & Ingress Security                        │
+│    - Streamable HTTP Transport (POST /mcp)             │
+│    - Token-Bucket Rate Limiter & Concurrency Guard     │
+│    - Constant-Time Bearer Auth (timingSafeEqual)       │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│ 2. Request Lifecycle & Context                         │
+│    - Correlation ID, Monotonic Deadlines, Scopes       │
+│    - Intent Classifier & Loop Detection                │
+└──────────────┬───────────────────────────┬─────────────┘
+               │                           │
+               ▼                           ▼
+┌────────────────────────────┐ ┌─────────────────────────┐
+│ 3. Core Tool Registry      │ │ 4. Knowledge Retrieval  │
+│    - Typed Zod Schemas     │ │    - Content Hashing    │
+│    - 2-Phase Confirmation  │ │    - Lexical BM25 Search│
+│    - Bounded Timeouts      │ │    - Provenance Builder │
+└──────────────┬─────────────┘ └───────────┬─────────────┘
+               │                           │
+               ▼                           ▼
+┌────────────────────────────────────────────────────────┐
+│ 5. SQLite Persistent Storage (Native WAL Mode)         │
+│    - Versioned Migrations, Parameterized Queries       │
+│    - Scoped Memory Repository & Document Index         │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│ 6. Model Provider Abstraction                          │
+│    - Ollama Client with Preflight & Exponential Backoff│
+│    - Mock Provider for 100% Deterministic Testing      │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Requirements
+
+- **Node.js**: v22 LTS (supports native `node:sqlite`)
+- **Ollama**: Local AI runner (`curl -fsSL https://ollama.com/install.sh | sh`)
+- **Platform**: Linux / macOS / WSL
+
+---
+
+## 4. Installation & Setup
+
+### 4.1 Clone and Install Dependencies
 
 ```bash
+git clone <repository-url>
+cd "Alexa MCP"
 npm install
 ```
 
-## Run (two terminals)
+### 4.2 Ollama Model Configuration
 
-Start the MCP server in Terminal A and the interactive agent REPL in Terminal B:
+1. Start the Ollama daemon:
+   ```bash
+   ollama serve
+   ```
+2. Pull the default model:
+   ```bash
+   ollama pull qwen2.5:3b
+   ```
+   *(Optional lightweight alternatives: `ollama pull qwen2.5:1.5b` or `ollama pull llama3.2:1b`)*
+
+3. Run provider diagnostics:
+   ```bash
+   npm run diagnostics
+   ```
+
+---
+
+## 5. Running the Server
+
+### 5.1 Start MCP Server (Streamable HTTP)
 
 ```bash
-# Terminal A (MCP Server on port 3001)
 npm run server
-
-# Terminal B (Interactive Agent REPL)
-npm run agent
 ```
+Server starts on `http://localhost:3001` with:
+- `POST /mcp`: Streamable HTTP MCP endpoint
+- `GET /healthz`: Basic health probe
+- `GET /api/system/status`: Real-time system diagnostics
 
-Or run both concurrently in a single terminal:
+### 5.2 Interactive Text / Voice REPL
 
 ```bash
-npm run dev
-```
+# Interactive Text REPL
+npm run agent:text
 
-## Voice Agent Architecture (Conversational Alexa + MCP)
-
-Digital Detective is a complete, two-way conversational voice agent that listens to human speech, investigates digital fraud in real-time using Model Context Protocol (MCP) tools, and replies naturally in spoken voice.
-
-```
-       ┌────────────────┐
-       │   Human Voice  │
-       └───────┬────────┘
-               │ (Microphone / arecord / Web Audio)
-               ▼
-   ┌───────────────────────┐
-   │  STT Pipeline         │ ◄── Auditory Earcon (listen start)
-   │  - Silence / VAD Trim │
-   │  - whisper.cpp Engine │
-   │  - Transcript Clean   │
-   └───────────┬───────────┘
-               │
-               ▼
-   ┌─────────────────────────────────────────────────────────────┐
-   │  Voice Dialogue Manager & Intent Classifier                │
-   │  ├─ GREETING / SMALLTALK ──► Spoken Knowledge Explanation   │
-   │  ├─ VOICE CONTROL ─────────► Persona Switch, Mute/Unmute    │
-   │  ├─ REPEAT / EXPLAIN ──────► Detailed Voice Breakdown       │
-   │  └─ INVESTIGATE FRAUD ─────► MCP Multi-Tool Autonomous Loop │
-   └───────────────────────────┬─────────────────────────────────┘
-                               │
-                               ▼
-   ┌─────────────────────────────────────────────────────────────┐
-   │  Natural Spoken Briefing Generator                          │
-   │  - Calibrated Risk Score (0-100)                            │
-   │  - Primary Red Flags & Deception Signals                    │
-   │  - Grounded Web Evidence                                    │
-   │  - Actionable Human Safety Recommendation                   │
-   └───────────────────────────┬─────────────────────────────────┘
-                               │
-                               ▼
-   ┌─────────────────────────────────────────────────────────────┐
-   │  Multi-Backend TTS Engine                                  │ ◄── Auditory Earcon (alert / safe)
-   │  - Neural Edge-TTS (Alexa-grade natural voices)             │
-   │  - Speech Dispatcher (spd-say Linux fast local)             │
-   │  - Piper ONNX Neural TTS                                    │
-   │  - Audio Cache (0ms latency instant playback)               │
-   └───────────┬─────────────────────────────────────────────────┘
-               │ (Speakers / PipeWire pw-play / aplay / Web Audio)
-               ▼
-       ┌────────────────┐
-       │   Agent Speech │
-       └────────────────┘
-```
-
-### Voice Capabilities & Features
-
-1. **Continuous Voice Conversation Loop**:
-   - The agent speaks an introductory greeting, chimes to signal listening, listens to user input, investigates, delivers spoken briefings, and listens again.
-2. **Multi-Backend Text-To-Speech (TTS)**:
-   - **Neural Edge-TTS**: Studio-quality neural voices (`en-US-AriaNeural`, `en-US-GuyNeural`, `en-IN-NeerjaNeural`).
-   - **Speech Dispatcher (`spd-say`)**: Instant local Linux desktop speech with zero extra packages required.
-   - **Piper & Espeak**: Fast offline ONNX/formant fallbacks.
-   - **Audio File Caching**: Pre-synthesized prompt caching with SHA-256 for 0ms latency audio playback.
-3. **Auditory Earcons**:
-   - Acoustic earcons synthesized via PCM:
-     - Ascending wake chime (`listen_start`)
-     - Soft descending confirmation tone (`listen_stop`)
-     - Ambient investigation chirp (`investigating`)
-     - Harmonious major triad (`verdict_safe`)
-     - Alert siren interval (`verdict_alert`)
-4. **Voice Personas**:
-   - `alexa`: Crisp, balanced, clear natural assistant tone (`en-US-AriaNeural`).
-   - `detective`: Sharp, authoritative investigative voice (`en-US-GuyNeural`).
-   - `forensics`: Deep, calm, highly technical analytical voice (`en-US-ChristopherNeural`).
-   - `advisor`: Warm, supportive, protective advisory voice (`en-IN-NeerjaNeural`).
-5. **Interactive Web Voice Assistant UI**:
-   - Access the cyberpunk-themed voice assistant dashboard at `http://localhost:3001`.
-   - Features real-time microphone visualization, glowing reactive orb, speech recognition, persona selector, and live risk score meters.
-6. **Voice Commands Supported**:
-   - *"Alexa, is this a scam?"* or *"Check http://example.xyz"* — triggers investigation pipeline.
-   - *"Why is it high risk?"* or *"Explain SSRF"* — conversational follow-up.
-   - *"Can you repeat that?"* — repeats previous agent briefing.
-   - *"Switch voice to advisor"* or *"Switch voice to detective"* — switches persona on the fly.
-   - *"Mute"* / *"Unmute"* — controls voice audio output.
-   - *"Help"* — lists available voice commands.
-   - *"Goodbye"* — exits gracefully.
-
-### Running the Voice Agent
-
-```bash
-# Terminal A: Start MCP Server and Web Voice Interface (port 3001)
-npm run server
-
-# Terminal B: Start Hands-Free Voice Agent
+# Two-Way Conversational Voice Agent
 npm run agent:voice
 ```
 
-Or run both concurrently:
-```bash
-npm run dev
+---
+
+## 6. MCP Client Configuration
+
+### Claude Desktop (`claude_desktop_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "alexa-assistant": {
+      "url": "http://localhost:3001/mcp"
+    }
+  }
+}
 ```
 
-Open `http://localhost:3001` in your browser for the Web Voice Dashboard!
+### Cursor IDE
+1. Open **Settings -> Features -> MCP Servers**.
+2. Click **Add New MCP Server**.
+3. Set **Type** to `SSE` or `Streamable HTTP` with URL: `http://localhost:3001/mcp`.
 
-## Example Input
+---
 
-Paste a suspicious message into the `detective›` prompt:
+## 7. Available Core MCP Tools
 
-```text
-Congratulations! You have been selected for a remote job paying ₹2,50,000 per month. Pay ₹999 registration fee at http://secure-jobs-verify.xyz/register to continue.
-```
+| Tool | Description |
+|---|---|
+| `ask_assistant` | Evidence-grounded natural-language question answering with automated tool orchestration. |
+| `search_knowledge` | Lexical BM25 search across indexed project documents and Markdown files. |
+| `inspect_repository` | Workspace structure, dependency analysis, and file inspection within safe boundaries. |
+| `analyze_error` | Root-cause analysis of stack traces, error messages, and test failures. |
+| `manage_memory` | Save, retrieve, list, or delete scoped user preferences with explicit confirmation for deletion. |
+| `get_system_status` | Operational health diagnostics for Ollama, SQLite, tools, and retrieval status. |
+| *Digital Detective Suite* | `inspect_url`, `extract_claims`, `analyze_message`, `search_evidence`, `calculate_risk`. |
 
-## What You'll See
+---
 
-1. Real-time MCP tool invocations stream into the terminal:
-   - `extract_claims` breaks down sentences and flags high-importance payment and earnings claims.
-   - `analyze_message` detects urgency, unrealistic salary promises, upfront fee demands, and exclamation marks.
-   - `inspect_url` safely validates the domain (SSRF protection), flags `.xyz` TLD, and checks content.
-   - `search_evidence` queries DuckDuckGo for scam reports, domain age, or victim complaints.
-   - `cross_reference` contrasts high-importance claims against discovered web evidence.
-   - `calculate_risk` tabulates weighted risk factors into a 0–100 score and categorical verdict.
-   - `generate_investigation_report` aggregates findings into a cohesive report.
-2. A clean, human-readable terminal report:
-   - **VERDICT**: HIGH RISK / SUSPICIOUS / LIKELY SAFE
-   - **RISK SCORE**: Numeric score out of 100
-   - **RED FLAGS**: Specific linguistic and behavioral signals detected
-   - **EVIDENCE**: Real search snippets and domain findings
-   - **RECOMMENDATION**: Actionable advisory guidance for users
+## 8. Example Questions & Invocations
 
-## Troubleshooting
+- *"Explain how my project works and what dependencies are installed."*  
+  -> Automatically routes to `inspect_repository`.
+- *"Find the root cause of this error: TypeError: Cannot read properties of undefined (reading 'digest')"*  
+  -> Automatically routes to `analyze_error`.
+- *"Search documentation for how rate limiting is configured."*  
+  -> Retrieves excerpts and citations from `docs/CONFIGURATION.md`.
+- *"Remember that my target deployment environment is Ubuntu 24.04 LTS."*  
+  -> Saves preference to scoped SQLite memory.
+- *"What did I ask you to remember?"*  
+  -> Recalls scoped preferences from memory.
+- *"Delete all memories from infra scope."*  
+  -> Halts and requests explicit two-phase confirmation before executing.
 
-- **"Cannot reach Ollama"**  
-  Run `ollama serve` in a background terminal and ensure `http://localhost:11434` is accessible.
-- **"Cannot reach MCP server"**  
-  Start the MCP server first using `npm run server` before running `npm run agent`.
-- **Model produces no tool calls**  
-  Ensure your model supports function calling: run `ollama pull qwen2.5:7b` (or `llama3.1:8b` / `mistral-nemo`). Models that do not support tool calling (such as base `llama3` or `gemma`) will not trigger MCP tools.
+---
 
+## 9. Testing & Verification
 
-## Fix A: Enforce Report-Only Final Answers
-The agent guarantees that verdicts come exclusively from the authoritative Model Context Protocol tool output rather than LLM memory or hallucination.
+The test suite runs 100% offline without requiring a running Ollama daemon or paid APIs:
 
-## Fix B: Intermediate Tool Plumbing
-Intermediate outputs across `extract_claims`, `analyze_message`, `inspect_url`, and `calculate_risk` are cached and directly plumbed into the final report.
-
-## Fix C: Risk Score Floors
-To prevent contradictions between red flags and risk scores, calibrated floor rules ensure that messages with red flags or high-importance claims receive minimum risk scores.
-
-## Fix D: Authoritative Report Formatting
-The terminal presentation renders an unmistakable authoritative block with double borders, categorized sections, and non-authoritative model commentary suppressed or relegated.
-
-## Voice Mode (Default Hands-Free)
-The agent now operates in voice mode by default (`DD_MODE=voice`). It listens to user voice input via ALSA `arecord`, performs local transcription via `whisper.cpp`, and announces the verdict via speech synthesis.
-
-## Contradiction & Signal Tests (B1–B5)
-Run the automated contradiction test suite:
 ```bash
+# Run all Vitest suites (unit, integration, security, E2E)
+npm test
+
+# Run specific suites
+npm run test:unit
+npm run test:integration
+npm run test:security
+npm run test:e2e
+
+# Run legacy regression, contradiction, and voice suites
+npm run test:regression
+npm run test:legacy
 npm run test:contradiction
+npm run test:voice
+
+# Full verification across all suites
+npm run test:all
 ```
+
+---
+
+## 10. Security & Threat Model
+
+- **Path Traversal Protection**: Filesystem access is strictly restricted to `WORKSPACE_ROOT`. Directory traversal sequences (`..`) are rejected.
+- **Two-Phase Confirmation**: Consequential and mutating actions generate a cryptographic HMAC token and require confirmation before modifying state.
+- **PII & Credential Redaction**: Automated sanitization masks API keys, passwords, and personal data in logs.
+- **Constant-Time Comparison**: Bearer tokens are compared using `crypto.timingSafeEqual`.
+- **SQL Injection Prevention**: 100% parameterized SQL prepared statements.
+
+---
+
+## 11. Documentation Index
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): Full architectural philosophy, component diagrams, and 12-step lifecycle.
+- [docs/API.md](docs/API.md): HTTP endpoints, SSE transport, status codes, and JSON error taxonomy.
+- [docs/MCP_CLIENT_SETUP.md](docs/MCP_CLIENT_SETUP.md): Configuration guides for Claude, Cursor, and custom clients.
+- [docs/CONFIGURATION.md](docs/CONFIGURATION.md): Complete list of environment variables and defaults.
+- [docs/SECURITY.md](docs/SECURITY.md): Threat model, boundaries, and production hardening checklist.
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): Solutions for missing models, port collisions, and database recovery.
+- [docs/COMMIT_PLAN.md](docs/COMMIT_PLAN.md): 80-commit engineering roadmap and verification log.

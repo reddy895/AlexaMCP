@@ -21,7 +21,7 @@ export function classifyQueryIntent(rawQuery: string): QueryClassification {
 
   // 1. Consequential / Mutating actions
   if (
-    /(delete all|remove memory|drop table|modify|overwrite|confirm before|make changes|execute action)/i.test(query)
+    /(delete|remove memory|drop table|modify|overwrite|confirm before|make changes|execute action)/i.test(query)
   ) {
     return {
       intent: "CONSEQUENTIAL_ACTION",

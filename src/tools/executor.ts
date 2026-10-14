@@ -1,7 +1,12 @@
 import { z } from "zod";
 import type { ToolDefinition } from "./registry.js";
 import type { ExecutionContext } from "../core/types.js";
-import { ToolExecutionError, InvalidInputError } from "../core/errors.js";
+import {
+  ToolExecutionError,
+  InvalidInputError,
+  ConfirmationRequiredError,
+  PermissionDeniedError,
+} from "../core/errors.js";
 import { assertActionConfirmed } from "../security/confirmation.js";
 import { logger } from "../observability/logger.js";
 
@@ -80,7 +85,11 @@ export class ToolExecutor {
 
       return result;
     } catch (err: unknown) {
-      if (err instanceof InvalidInputError) {
+      if (
+        err instanceof InvalidInputError ||
+        err instanceof ConfirmationRequiredError ||
+        err instanceof PermissionDeniedError
+      ) {
         throw err;
       }
       const msg = err instanceof Error ? err.message : String(err);

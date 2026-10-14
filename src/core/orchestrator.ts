@@ -10,6 +10,8 @@ import type { IToolRegistry } from "../tools/registry.js";
 import type { IMemoryService } from "../memory/memory-service.js";
 import type { IRetrievalEngine } from "../retrieval/search.js";
 import { CitationBuilder } from "../retrieval/citations.js";
+import { ToolExecutor } from "../tools/executor.js";
+import { ConfirmationRequiredError, InvalidInputError } from "./errors.js";
 import { logger } from "../observability/logger.js";
 import { getConfig } from "../config/env.js";
 
@@ -18,17 +20,20 @@ export interface OrchestrationEngineOptions {
   toolRegistry: IToolRegistry;
   memoryService?: IMemoryService;
   retrievalEngine?: IRetrievalEngine;
+  toolExecutor?: ToolExecutor;
 }
 
 export class OrchestrationEngine {
   private readonly provider: ILanguageModelProvider;
   private readonly toolRegistry: IToolRegistry;
+  private readonly toolExecutor: ToolExecutor;
   private readonly memoryService?: IMemoryService;
   private readonly retrievalEngine?: IRetrievalEngine;
 
   constructor(opts: OrchestrationEngineOptions) {
     this.provider = opts.provider;
     this.toolRegistry = opts.toolRegistry;
+    this.toolExecutor = opts.toolExecutor ?? new ToolExecutor();
     this.memoryService = opts.memoryService;
     this.retrievalEngine = opts.retrievalEngine;
   }
@@ -127,7 +132,11 @@ Intent for this session: ${classification.intent} (${classification.explanation}
         let toolStatus: "success" | "error" = "success";
 
         try {
-          toolOutput = await this.toolRegistry.execute(call.name, call.arguments, context);
+          const tool = this.toolRegistry.get(call.name);
+          if (!tool) {
+            throw new InvalidInputError(`Tool "${call.name}" is not registered.`);
+          }
+          toolOutput = await this.toolExecutor.executeTool(tool, call.arguments, context);
 
           // Check if output contains citations or evidence items
           if (toolOutput && typeof toolOutput === "object" && "citations" in toolOutput) {
@@ -137,6 +146,9 @@ Intent for this session: ${classification.intent} (${classification.explanation}
             }
           }
         } catch (err: unknown) {
+          if (err instanceof ConfirmationRequiredError) {
+            throw err;
+          }
           toolStatus = "error";
           toolOutput = { error: err instanceof Error ? err.message : String(err) };
           logger.error(`Tool execution error: ${call.name}`, { error: toolOutput });

@@ -2,15 +2,17 @@ import { Router, json, type Request, type Response, type NextFunction } from "ex
 import { createStreamableTransportHandler } from "./transport.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { DEFAULT_SERVER_INFO } from "./capabilities.js";
+import type { AssistantService } from "../core/assistant.js";
 
 export interface RouteOptions {
   serverFactory: () => McpServer;
+  assistantService?: AssistantService;
   authMiddleware?: (req: Request, res: Response, next: NextFunction) => void;
 }
 
 export function configureMcpRoutes(options: RouteOptions): Router {
   const router = Router();
-  router.use(json({ limit: "1mb" }));
+  router.use(json({ limit: "2mb" }));
 
   // CORS security headers
   router.use((_req, res, next) => {
@@ -29,6 +31,35 @@ export function configureMcpRoutes(options: RouteOptions): Router {
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Direct programmatic assistant access (no MCP protocol framing required)
+  if (options.assistantService) {
+    const assistant = options.assistantService;
+    router.post("/api/assistant", async (req: Request, res: Response) => {
+      try {
+        const { query, scope, userId, confirmationToken, timeoutMs } = req.body ?? {};
+        if (!query || typeof query !== "string") {
+          res.status(400).json({ error: "Query parameter is required and must be a string." });
+          return;
+        }
+
+        const result = await assistant.process({
+          query,
+          scope,
+          userId,
+          confirmationToken,
+          timeoutMs,
+        });
+
+        res.status(result.status === "failure" ? 500 : 200).json(result);
+      } catch (err: unknown) {
+        res.status(500).json({
+          status: "failure",
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    });
+  }
 
   const streamableHandler = createStreamableTransportHandler(options.serverFactory);
 
